@@ -1,0 +1,210 @@
+name: Stackpacks S3 Promotion
+
+run-name: >-
+  stackpacks-s3 -
+  ${{ github.event.inputs.operation }}
+  ${{ github.event.inputs.operation == 'list' && github.event.inputs.list_scope || format('{0}-to-{1}', github.event.inputs.source_env, github.event.inputs.target_env) }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Operation to run
+        required: true
+        type: choice
+        options:
+          - list
+          - promote
+      list_scope:
+        description: For list operation, select one bucket or all
+        required: true
+        type: choice
+        default: all
+        options:
+          - all
+          - dev
+          - preprod
+          - prod
+      source_env:
+        description: For promote operation, source bucket environment
+        required: true
+        type: choice
+        default: dev
+        options:
+          - dev
+          - preprod
+      target_env:
+        description: For promote operation, destination bucket environment
+        required: true
+        type: choice
+        default: preprod
+        options:
+          - preprod
+          - prod
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+concurrency:
+  group: stackpacks-s3-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  list-s3-buckets:
+    name: List S3 bucket (${{ matrix.env_name }})
+    if: ${{ github.event.inputs.operation == 'list' }}
+    runs-on: ubuntu-24.04
+    container:
+      image: quay.io/stackstate/sts-ci-images:stackstate-devops-6eec3649
+      volumes:
+        - /var/run/secrets/eks.amazonaws.com:/var/run/secrets/eks.amazonaws.com
+    strategy:
+      fail-fast: false
+      matrix:
+        env_name: [dev, preprod, prod]
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Resolve bucket for environment
+        id: bucket
+        env:
+          DEV_BUCKET_NAME: sts-stackpacks-dev
+          PREPROD_BUCKET_NAME: sts-stackpacks-preprod
+          PROD_BUCKET_NAME: sts-stackpacks-prod
+          LIST_SCOPE: ${{ github.event.inputs.list_scope }}
+          ENV_NAME: ${{ matrix.env_name }}
+        run: |
+          if [[ "${LIST_SCOPE}" != "all" && "${LIST_SCOPE}" != "${ENV_NAME}" ]]; then
+            echo "skip=true" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          case "${ENV_NAME}" in
+            dev) bucket="${DEV_BUCKET_NAME}" ;;
+            preprod) bucket="${PREPROD_BUCKET_NAME}" ;;
+            prod) bucket="${PROD_BUCKET_NAME}" ;;
+            *)
+              echo "Unsupported environment '${ENV_NAME}'" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "${bucket}" ]]; then
+            echo "Bucket variable for '${ENV_NAME}' is empty" >&2
+            exit 1
+          fi
+
+          echo "skip=false" >> "${GITHUB_OUTPUT}"
+          echo "bucket=${bucket}" >> "${GITHUB_OUTPUT}"
+
+      - name: List stackpacks in bucket
+        if: steps.bucket.outputs.skip != 'true'
+        env:
+          BUCKET: ${{ steps.bucket.outputs.bucket }}
+        run: |
+          aws s3 ls "s3://${BUCKET}" | awk '/\.sts$/ {print}'
+
+  promote-s3-bucket:
+    name: Promote stackpacks from ${{ github.event.inputs.source_env }} to ${{ github.event.inputs.target_env }}
+    if: ${{ github.event.inputs.operation == 'promote' }}
+    runs-on: ubuntu-24.04
+    container:
+      image: quay.io/stackstate/sts-ci-images:stackstate-devops-6eec3649
+      volumes:
+        - /var/run/secrets/eks.amazonaws.com:/var/run/secrets/eks.amazonaws.com
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate promotion route and resolve buckets
+        id: buckets
+        env:
+          SOURCE_ENV: ${{ github.event.inputs.source_env }}
+          TARGET_ENV: ${{ github.event.inputs.target_env }}
+          DEV_BUCKET_NAME: sts-stackpacks-dev
+          PREPROD_BUCKET_NAME: sts-stackpacks-preprod
+          PROD_BUCKET_NAME: sts-stackpacks-prod
+        run: |
+          route="${SOURCE_ENV}->${TARGET_ENV}"
+          if [[ "${route}" != "dev->preprod" && "${route}" != "preprod->prod" ]]; then
+            echo "Unsupported promotion route '${route}'" >&2
+            exit 1
+          fi
+
+          case "${SOURCE_ENV}" in
+            dev) source_bucket="${DEV_BUCKET_NAME}" ;;
+            preprod) source_bucket="${PREPROD_BUCKET_NAME}" ;;
+            *)
+              echo "Unsupported source environment '${SOURCE_ENV}'" >&2
+              exit 1
+              ;;
+          esac
+
+          case "${TARGET_ENV}" in
+            preprod) target_bucket="${PREPROD_BUCKET_NAME}" ;;
+            prod) target_bucket="${PROD_BUCKET_NAME}" ;;
+            *)
+              echo "Unsupported target environment '${TARGET_ENV}'" >&2
+              exit 1
+              ;;
+          esac
+
+          if [[ -z "${source_bucket}" || -z "${target_bucket}" ]]; then
+            echo "Resolved source or target bucket is empty" >&2
+            exit 1
+          fi
+
+          {
+            echo "source_bucket=${source_bucket}"
+            echo "target_bucket=${target_bucket}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Promote stackpacks
+        env:
+          SOURCE_ENV: ${{ github.event.inputs.source_env }}
+          TARGET_ENV: ${{ github.event.inputs.target_env }}
+          SOURCE_BUCKET: ${{ steps.buckets.outputs.source_bucket }}
+          TARGET_BUCKET: ${{ steps.buckets.outputs.target_bucket }}
+        run: |
+          source_uri="s3://${SOURCE_BUCKET}"
+          target_uri="s3://${TARGET_BUCKET}"
+
+          aws s3 ls "${source_uri}" >/dev/null
+          aws s3 ls "${target_uri}" >/dev/null
+
+          mapfile -t target_items < <(aws s3 ls "${target_uri}" | awk '/\.sts$/ {print $4}')
+          for item in "${target_items[@]}"; do
+            [[ -n "${item}" ]] || continue
+            aws s3 rm "${target_uri}/${item}"
+          done
+
+          mapfile -t source_items < <(aws s3 ls "${source_uri}" | awk '/\.sts$/ {print $4}')
+          copied=0
+          for item in "${source_items[@]}"; do
+            [[ -n "${item}" ]] || continue
+
+            destination_name="${item}"
+            if [[ "${TARGET_ENV}" == "prod" ]]; then
+              destination_name="${destination_name/-SNAPSHOT/}"
+            fi
+
+            aws s3 cp "${source_uri}/${item}" "${target_uri}/${destination_name}"
+            aws s3api put-object-acl --bucket "${TARGET_BUCKET}" --key "${destination_name}" --acl public-read
+            copied=$((copied + 1))
+          done
+
+          if [[ "${copied}" -eq 0 ]]; then
+            echo "No .sts files found in source bucket ${SOURCE_BUCKET}" >&2
+            exit 1
+          fi
+
+          echo "Promoted ${copied} stackpack files from ${SOURCE_BUCKET} to ${TARGET_BUCKET}"

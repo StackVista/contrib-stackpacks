@@ -1,0 +1,45 @@
+nodes:
+  - _type: ComponentPresentation
+    name: "Notification operator metrics"
+    description: "Metrics for notification operator"
+    identifier: urn:stackpack:notification-operator:component-presentation:metrics
+    binding:
+      _type: ComponentPresentationQueryBinding
+      query: label = "stackpack:kubernetes" and type = "pod"
+    rank:
+      specificity: 2
+    presentation:
+      metricPerspective:
+        tabs:
+          -
+            tabId: notification-controller
+            title: Notification controller
+            order: 80
+            sections:
+              -
+                sectionId: notification-controller
+                title: Notification Controller
+                order: 3
+                metrics:
+                  - metricId: controller_runtime_reconcile
+                  - metricId: notification_synced
+                  - metricId: notification_enabled
+    metrics:
+      - metricId: controller_runtime_reconcile
+        name: Total number of reconciliations per controller/cluster
+        queries:
+        - alias: "cluster: ${cluster_name} status: ${result}"
+          expression: sum(increase(notification_operator_controller_runtime_reconcile[1m])) by (cluster_name, result)
+        unit: short
+      - metricId: notification_synced
+        name: Notification Sync Status
+        queries:
+        - alias: "cluster: ${cluster_name} name: ${name}"
+          expression: sum(notification_operator_suse_observability_notification_synced) by (cluster_name, name)
+        unit: short
+      - metricId: urn:stackpack:notification-operator:metric-binding:notification_enabled
+        name: Notification Enabled Status
+        queries:
+        - alias: "cluster: ${cluster_name} name: ${name}"
+          expression: sum(notification_operator_suse_observability_notification_enabled) by (cluster_name, name)
+        unit: short

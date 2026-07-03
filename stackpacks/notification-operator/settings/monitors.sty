@@ -1,0 +1,58 @@
+nodes:
+- _type: Monitor
+  function: urn:stackpack:common:monitor-function:threshold
+  arguments:
+    threshold: 0.0
+    comparator: GT
+    failureState: CRITICAL
+    metric:
+      aliasTemplate: "cluster: ${cluster_name} status: ${result}"
+      query: increase(notification_operator_controller_runtime_reconcile{result="error"}[10m])
+      unit: short
+    urnTemplate: urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}
+  description: "This monitor checks for errors in the controller runtime reconcile process."
+  identifier: urn:stackpack:notification-operator:monitor:notification-operator:controller-reconcile-errors
+  intervalSeconds: 30
+  name: Controller Runtime Reconcile Errors
+  remediationHint: !include remediation-hints/controller-reconcile-errors.md.hbs
+  status: ENABLED
+  tags:
+  - notification-operator
+- _type: Monitor
+  function: urn:stackpack:common:monitor-function:threshold
+  arguments:
+    threshold: 0.0
+    comparator: GT
+    failureState: CRITICAL
+    metric:
+      aliasTemplate: "cluster: ${cluster_name} namespace: ${namespace} name: ${name}"
+      query: count(notification_operator_suse_observability_notification_enabled == 1 and notification_operator_suse_observability_notification_synced == 0) by (cluster_name, name, namespace, pod_name)
+      unit: short
+    urnTemplate: urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}
+  description: "This monitor checks if there are any enabled Notification resources that are not synced."
+  identifier: urn:stackpack:notification-operator:monitor:notification-operator:notification-enabled-not-synced
+  intervalSeconds: 30
+  name: Enabled Notification Resources Not Synced
+  remediationHint: !include remediation-hints/notification-not-synced.md.hbs
+  status: ENABLED
+  tags:
+  - notification-operator
+- _type: Monitor
+  function: urn:stackpack:common:monitor-function:threshold
+  arguments:
+    threshold: 0.0
+    comparator: GT
+    failureState: DEVIATING
+    metric:
+      aliasTemplate: "cluster: ${cluster_name} namespace: ${namespace} name: ${name}"
+      query: count(notification_operator_suse_observability_notification_enabled == 0) by (cluster_name, name, namespace, pod_name)
+      unit: short
+    urnTemplate: urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}
+  description: This monitor checks if there are any disabled SUSE Observability Notifications.
+  identifier: urn:stackpack:notification-operator:monitor:notification-operator:notification-disabled
+  intervalSeconds: 30
+  name: Notification Disabled
+  remediationHint: !include remediation-hints/notification-disabled.md.hbs
+  status: ENABLED
+  tags:
+  - notification-operator
