@@ -167,8 +167,8 @@ jobs:
             echo "v2_matrix=${v2_matrix}"
           } >> "${GITHUB_OUTPUT}"
 
-  stackpack-validate:
-    name: stackpack validate (${{ matrix.stackpack }})
+  validate:
+    name: validate (${{ matrix.stackpack }})
     needs: [setup]
     if: needs.setup.outputs.v2_matrix != '[]'
     runs-on: ubuntu-24.04
@@ -195,13 +195,13 @@ jobs:
             "${VALIDATOR_IMAGE}" \
             /opt/docker/bin/stack-pack-validator -directory "/workspace/stackpacks/${STACKPACK}"
 
-  stackpack-package:
-    name: stackpack package (${{ matrix.stackpack }})
-    needs: [setup, stackpack-validate]
+  package:
+    name: package (${{ matrix.stackpack }})
+    needs: [setup, validate]
     if: |
       always() &&
       needs.setup.outputs.v2_matrix != '[]' &&
-      needs.stackpack-validate.result == 'success'
+      needs.validate.result == 'success'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
@@ -281,15 +281,16 @@ jobs:
     name: Docker image build, scan, and push
     needs:
       - setup
-      - stackpack-package
+      - package
     if: |
-      always() &&
-      (needs.stackpack-package.result == 'success' || needs.stackpack-package.result == 'skipped') &&
-      (needs.setup.outputs.is_master == 'true' || needs.setup.outputs.is_dispatch_build == 'true')
+      always()
+#      (needs.package.result == 'success' || needs.package.result == 'skipped') &&
+#      (needs.setup.outputs.is_master == 'true' || needs.setup.outputs.is_dispatch_build == 'true')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
+      packages: write
     strategy:
       fail-fast: false
     steps:
@@ -389,26 +390,35 @@ jobs:
       - name: Push single-arch image (amd64)
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
-          image: ghcr.io/stackvista/contrib-stackpacks
+          image: quay.io/stackstate/contrib-stackpacks
           tag: ${{ steps.tag.outputs.value }}
           arch: amd64
           docker-context: docker
           dockerfile: docker/Dockerfile
           labels: ${{ steps.oci-labels.outputs.labels }}
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Push single-arch image (arm64)
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
-          image: ghcr.io/stackvista/contrib-stackpacks
+          image: quay.io/stackstate/contrib-stackpacks
           tag: ${{ steps.tag.outputs.value }}
           arch: arm64
           docker-context: docker
           dockerfile: docker/Dockerfile
           labels: ${{ steps.oci-labels.outputs.labels }}
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Merge multi-arch manifest
         uses: StackVista/image-pipeline/.github/actions/merge-multiarch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
-          image: ghcr.io/stackvista/contrib-stackpacks
+          image: quay.io/stackstate/contrib-stackpacks
           tag: ${{ steps.tag.outputs.value }}
           arches: amd64,arm64
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
