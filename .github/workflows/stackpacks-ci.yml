@@ -34,13 +34,6 @@ concurrency:
   group: contrib-stackpacks-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  IVY2_HOME: ${{ github.workspace }}/.ivy2
-  SBT_OPTS: >-
-    -Dsbt.ivy.home=${{ github.workspace }}/.ivy2
-    -Divy.home=${{ github.workspace }}/.ivy2
-    -Dsbt.boot.directory=${{ github.workspace }}/.sbt-boot-cache
-
 jobs:
   setup:
     name: Resolve run conditions
@@ -246,7 +239,6 @@ jobs:
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           RUN_NUMBER: ${{ github.run_number }}
           SHA: ${{ github.sha }}
-          GITLAB_PACKAGE_REGISTRY_PASSWORD: ${{ secrets.GITLAB_PACKAGE_REGISTRY_PASSWORD || secrets.GITLAB_PACKAGE_REGISTRY_PROXY_TOKEN }}
         run: |
           cd "stackpacks/${STACKPACK}"
           base_version=$(yq -r '.version' stackpack.yaml)
@@ -277,18 +269,6 @@ jobs:
           mkdir -p target
           mv -- *.sts target/
           ls -lh target/*.sts
-
-          package_file=$(ls target/*.sts | head -1)
-          package_name=$(basename "${package_file}")
-          if [[ "${is_release}" == "true" ]]; then
-            project_id=71271774
-          else
-            project_id=71345079
-          fi
-          curl --fail-with-body --silent --show-error \
-            --header "PRIVATE-TOKEN: ${GITLAB_PACKAGE_REGISTRY_PASSWORD}" \
-            --upload-file "${package_file}" \
-            "https://gitlab.com/api/v4/projects/${project_id}/packages/generic/${STACKPACK}/${stackpack_version}/${package_name}"
 
       - name: Upload ${{ matrix.stackpack }} sts artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -409,102 +389,26 @@ jobs:
       - name: Push single-arch image (amd64)
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
-          image: quay.io/stackstate/contrib-stackpacks
+          image: ghcr.io/stackvista/contrib-stackpacks
           tag: ${{ steps.tag.outputs.value }}
           arch: amd64
           docker-context: docker
           dockerfile: docker/Dockerfile
           labels: ${{ steps.oci-labels.outputs.labels }}
-          target-registry: quay.io
-          target-registry-user: ${{ vars.QUAY_USER }}
-          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Push single-arch image (arm64)
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
-          image: quay.io/stackstate/contrib-stackpacks
+          image: ghcr.io/stackvista/contrib-stackpacks
           tag: ${{ steps.tag.outputs.value }}
           arch: arm64
           docker-context: docker
           dockerfile: docker/Dockerfile
           labels: ${{ steps.oci-labels.outputs.labels }}
-          target-registry: quay.io
-          target-registry-user: ${{ vars.QUAY_USER }}
-          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Merge multi-arch manifest
         uses: StackVista/image-pipeline/.github/actions/merge-multiarch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
-          image: quay.io/stackstate/contrib-stackpacks
+          image: ghcr.io/stackvista/contrib-stackpacks
           tag: ${{ steps.tag.outputs.value }}
           arches: amd64,arm64
-          target-registry: quay.io
-          target-registry-user: ${{ vars.QUAY_USER }}
-          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
-
-  update-stackpacks-version-in-helm:
-    name: Update stackpacks version in helm-charts-internal
-    needs: [setup]
-    if: |
-      always() &&
-      needs.setup.outputs.is_master == 'true'
-    uses: ./.github/workflows/update-stackpacks-version-in-helm.yml
-    secrets:
-      HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID }}
-      HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY }}
-
-  cerberus-notify-on-master-fail:
-    name: Cerberus notify on master failure
-    needs:
-      - setup
-      - stackpack-validate
-      - stackpack-package
-      - build-and-push-docker-image
-      - update-stackpacks-version-in-helm
-    if: |
-      always() &&
-      needs.setup.outputs.is_master == 'true' &&
-      contains(needs.*.result, 'failure')
-    runs-on: ubuntu-slim
-    steps:
-      - name: Notify Cerberus
-        env:
-          CERBERUS_LAMBDA_URL: ${{ secrets.CERBERUS_LAMBDA_URL }}
-          SLACK_CI_REPORT_CHANNEL: ${{ vars.SLACK_CI_REPORT_CHANNEL }}
-          REPO: ${{ github.repository }}
-          REPO_ID: ${{ github.repository_id }}
-          SHA: ${{ github.sha }}
-          REF_NAME: ${{ github.ref_name }}
-          RUN_ID: ${{ github.run_id }}
-          COMMIT_TITLE: ${{ github.event.head_commit.message }}
-        run: |
-          payload=$(jq -n \
-            --arg repo_id "${REPO_ID}" \
-            --arg repo_slug "${REPO}" \
-            --arg repo_name "${REPO##*/}" \
-            --arg sha "${SHA}" \
-            --arg title "${COMMIT_TITLE%%$'\n'*}" \
-            --arg branch "${REF_NAME}" \
-            --arg run_id "${RUN_ID}" \
-            --arg pipeline_url "https://github.com/${REPO}/actions/runs/${RUN_ID}" \
-            --arg channel "${SLACK_CI_REPORT_CHANNEL}" \
-            '{
-              action: "notify",
-              platform: "github",
-              context: {
-                "project.id": $repo_id,
-                "project.name": $repo_name,
-                "project.slug": $repo_slug,
-                "commit.sha": $sha,
-                "commit.title": $title,
-                branch: $branch,
-                pipeline: $run_id,
-                "pipeline.url": $pipeline_url,
-                suite: "build",
-                channel: $channel
-              }
-            }')
-          curl --fail --silent --show-error --request POST \
-            --header "Content-Type: application/json" \
-            --data "${payload}" \
-            "${CERBERUS_LAMBDA_URL}"
