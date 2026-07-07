@@ -305,22 +305,14 @@ jobs:
         with:
           pattern: sts-*
           path: artifacts
+          merge-multiple: true
 
       - name: Stage stackpacks
-        env:
-          PACKS: open-telemetry-2 otel-k8s-crd suse-observability-2
         run: |
           dest=docker/rootfs/stackpacks
           rm -rf "${dest}"
           mkdir -p "${dest}"
-          for pack in ${PACKS}; do
-            src="artifacts/sts-${pack}"
-            if [[ ! -d "${src}" ]]; then
-              echo "Missing artifact sts-${pack}" >&2
-              exit 1
-            fi
-            cp "${src}"/*.sts "${dest}/"
-          done
+          cp artifacts/*.sts "${dest}/"
 
       - name: Compute image tag
         id: tag

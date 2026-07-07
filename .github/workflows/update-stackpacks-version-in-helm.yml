@@ -21,7 +21,7 @@ defaults:
 
 jobs:
   update-stackpacks-version-in-helm:
-    runs-on: ubuntu-slim
+    runs-on: small
     steps:
       - name: Generate GitHub App token
         id: app-token
@@ -46,6 +46,8 @@ jobs:
                 "pipeline": "stackpacks",
                 "target_branch": "master",
                 "stackpacks_source_branch": "master",
+                "stackpacks_contrib_source_branch": "main",
+                "stackpacks_suse_source_branch": "main",
                 "dry_run": "false"
               }
             }' \
