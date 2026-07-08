@@ -31,8 +31,8 @@ nodes:
         metricQueries:
           - expression: |-
               sum(label_replace(stackstate_elasticsearch_indices_store_size_bytes_total{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}"
               }, "sts_index","$1","index", ".*(sts_k8s_logs|sts_multi_metrics|sts_internal_events|sts_topology_events|sts_generic_events|sts_trace_events|sts_annotations).*")) by (sts_index)  / 1000000000
             alias: "${sts_index}"
         chart:
@@ -46,12 +46,12 @@ nodes:
           - expression: |-
               max by (storage)(label_replace(
                 max_over_time(kubernetes_kubelet_volume_stats_used_bytes{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
                   persistentvolumeclaim=~"data-.*-(elasticsearch-master-\\d)"
                 }[5m]) / max_over_time(kubernetes_kubelet_volume_stats_capacity_bytes{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
                   persistentvolumeclaim=~"data-.*-(elasticsearch-master-\\d)"
                 }[5m]), "storage", "$1", "persistentvolumeclaim", "data-.*-(elasticsearch-.*)"))
             alias: ${storage}

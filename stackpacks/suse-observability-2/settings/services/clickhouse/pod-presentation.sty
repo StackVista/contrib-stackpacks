@@ -38,13 +38,13 @@ nodes:
         metricQueries:
           - expression: |-
               (stackstate_clickhouse_backup_last_create_duration{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
               } + stackstate_clickhouse_backup_last_upload_duration{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
               }) / 1000000000
             alias: "${kube_app_name}"
         chart:
@@ -58,12 +58,12 @@ nodes:
           - expression: |-
               max by (storage)(label_replace(
                 max_over_time(kubernetes_kubelet_volume_stats_used_bytes{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
                   persistentvolumeclaim=~"data-.*-(clickhouse-.*)"
                 }[5m]) / max_over_time(kubernetes_kubelet_volume_stats_capacity_bytes{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
                   persistentvolumeclaim=~"data-.*-(clickhouse-.*)"
                 }[5m]), "storage"," $1", "persistentvolumeclaim", "data-.*-(clickhouse-.*)"))
             alias: ${storage}

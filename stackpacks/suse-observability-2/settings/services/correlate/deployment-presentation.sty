@@ -48,20 +48,20 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Http
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Connections
         chart:
@@ -74,11 +74,11 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, sum by (data_type, le) (rate(stackstate_stackstate_correlate_received_data_latency_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               })))
             alias: Latency to ${data_type}
         chart:
@@ -91,11 +91,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type) (avg_over_time(stackstate_stackstate_correlate_unique_active_element_approx_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__interval}]))
             alias: "${element_type}"
         chart:
@@ -108,11 +108,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type) (avg_over_time(stackstate_stackstate_correlate_element_create_approx_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__interval}]))
             alias: "${element_type}"
         chart:
@@ -125,11 +125,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (correlation_type) (avg_over_time(stackstate_stackstate_correlate_buffer_occupancy{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__interval}]))
             alias: "${correlation_type}"
         chart:
@@ -142,47 +142,47 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Total
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_correlated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Correlated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_uncorrelated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Uncorrelated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_subsumed{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Subsumed
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_data_dropped{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Dropped
         chart:
@@ -195,47 +195,47 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Total
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_correlated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Correlated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_uncorrelated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Uncorrelated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_data_dropped{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Dropped
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_ambiguous_endpoints{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Ambiguous
         chart:
@@ -248,11 +248,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (agent_cluster) (rate(stackstate_stackstate_correlate_http_observations_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: "${agent_cluster}"
         chart:
@@ -265,11 +265,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (agent_cluster) (rate(stackstate_stackstate_correlate_endpoints_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: "${agent_cluster}"
         chart:

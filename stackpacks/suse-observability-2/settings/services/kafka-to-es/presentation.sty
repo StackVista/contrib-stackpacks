@@ -32,9 +32,9 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, rate(stackstate_stackstate_kafka2es_data_latency_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }))
             alias: ${pod_name} - ${data_type}
@@ -48,9 +48,9 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, rate(stackstate_stackstate_kafka2es_received_data_latency_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }))
             alias: ${pod_name} - ${data_type}
@@ -64,14 +64,14 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, sum by(data_type, pod_name, le)(rate(stackstate_stackstate_kafka2es_received_data_latency_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }))) / sum by(data_type, pod_name)(rate(stackstate_stackstate_kafka2es_received_data_latency_seconds_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }[${__interval}]) > 0.05)
             alias: ${pod_name} - ${data_type}

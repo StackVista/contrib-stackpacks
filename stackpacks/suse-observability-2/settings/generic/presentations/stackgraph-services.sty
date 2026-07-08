@@ -1,6 +1,7 @@
 nodes:
   - _type: ComponentPresentation
     name: "SUSE Observability Stackgraph services"
+    title: "SUSE Observability Stackgraph services"
     description: "ComponentPresentation for SUSE Observability Stackgraph services"
     identifier: urn:stackpack:suse-observability-2:component-presentation:stackgraph-services
     binding:
@@ -32,11 +33,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (pod_name) (stackstate_stackgraph_readcache_size_bytes{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               })
             alias: Used ${pod_name}
         chart:
@@ -49,11 +50,11 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, rate(stackstate_stackgraph_transaction_duration_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }))
             alias: Used ${pod_name} - ${name}
         chart:
@@ -66,17 +67,17 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.50, (sum by (pod_name, le) (rate(stackstate_stackgraph_readcache_retention_time_ms{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[20m])) or sum by (pod_name, le) (rate(stackstate_stackgraph_readcache_retention_time_ms_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[20m]))))
             alias: .5 quantile - ${pod_name}
         chart:

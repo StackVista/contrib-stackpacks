@@ -9,6 +9,30 @@ nodes:
     rank:
       specificity: 10
     presentation:
+      highlight:
+        title: "SUSE Observability Receiver"
+        fields: []
+        links:
+          - linkId: data-ingestion-dashboard
+            title: "Data ingestion dashboard"
+            target: "#/dashboards/urn:stackpack:suse-observability-2:shared:dashboard:data-ingestion"
+            tooltip: "Open the bundled SUSE Observability data ingestion dashboard"
+            order: 100.0
+          - linkId: topology-processing-dashboard
+            title: "Topology processing dashboard"
+            target: "#/dashboards/urn:stackpack:suse-observability-2:shared:dashboard:topology-processing"
+            tooltip: "Open the bundled SUSE Observability topology processing dashboard"
+            order: 90.0
+          - linkId: traces-processing-dashboard
+            title: "Traces processing dashboard"
+            target: "#/dashboards/urn:stackpack:suse-observability-2:shared:dashboard:traces-processing"
+            tooltip: "Open the bundled SUSE Observability traces processing dashboard"
+            order: 80.0
+          - linkId: logs-processing-dashboard
+            title: "Logs processing dashboard"
+            target: "#/dashboards/urn:stackpack:suse-observability-2:shared:dashboard:logs-processing"
+            tooltip: "Open the bundled SUSE Observability logs processing dashboard"
+            order: 70.0
       metricPerspective:
         tabs:
           -
@@ -39,11 +63,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type) (avg_over_time(stackstate_stackstate_receiver_unique_element_request_approx_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}]))
             alias: "${element_type}"
         chart:
@@ -56,20 +80,20 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type) (avg_over_time(stackstate_stackstate_receiver_element_create_request_approx_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}]))
             alias: "${element_type}"
           - expression: |-
               sum by (element_type) (avg_over_time(stackstate_stackstate_receiver_element_create_passed_max{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}]))
             alias: Budget ${element_type}
         chart:
@@ -82,17 +106,17 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type, cluster_name, namespace, pod_name) (avg_over_time(stackstate_stackstate_receiver_unique_element_passed_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}])) / sum by (element_type, cluster_name, namespace, pod_name) (avg_over_time(stackstate_stackstate_receiver_unique_element_passed_max{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}]))
             alias: "${element_type} - ${pod_name}"
             componentIdentifierTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
@@ -116,17 +140,17 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type, cluster_name, namespace, pod_name) (avg_over_time(stackstate_stackstate_receiver_element_create_passed_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}])) / sum by (element_type, cluster_name, namespace, pod_name) (avg_over_time(stackstate_stackstate_receiver_element_create_passed_max{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}]))
             alias: "${element_type} - ${pod_name}"
             componentIdentifierTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
@@ -141,11 +165,11 @@ nodes:
           - expression: |-
               max_over_time(stackstate_stackstate_receiver_unique_element_passed_count{
                 element_type="agent",
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__interval}])
             alias: Agent count - ${pod_name}
             componentIdentifierTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
@@ -159,11 +183,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (element_type) (stackstate_stackstate_receiver_element_create_passed_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               })
             alias: "${element_type}"
         chart:
@@ -176,11 +200,11 @@ nodes:
         metricQueries:
           - expression: |-
               sum(delta(stackstate_akka_http_requests_active{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__rate_interval}]))
             alias: Active requests
         chart:
@@ -194,21 +218,21 @@ nodes:
           - expression: |-
               sum(rate(stackstate_stackstate_receiver_events_accepted_size{
                 element_type="k8sLogs",
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__rate_interval}]))
             alias: Accepted
           - expression: |-
               sum(rate(stackstate_stackstate_receiver_events_rejected_size{
                 element_type="k8sLogs",
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__rate_interval}]))
             alias: Rejected
         chart:
@@ -221,21 +245,21 @@ nodes:
         metricQueries:
           - expression: |-
               topk(10, rate(stackstate_stackstate_receiver_logs_rejected_size{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               }[${__rate_interval}])) @ end()
             alias: ${limited_pod_name} Rejected by - ${cluster_name}/${namespace}/${pod_name}
             componentIdentifierTemplate: "urn:kubernetes:/${cluster_name}/pod/${limited_pod_uid}"
           - expression: |-
               max(stackstate_stackstate_receiver_logs_budget_per_pod {
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}" 
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}" 
               })
             alias: Logs budget per pod per time window
         chart:
@@ -248,15 +272,15 @@ nodes:
         metricQueries:
           - expression: |-
               max by (element_type)(max_over_time(stackstate_stackstate_receiver_unique_element_passed_count{
-                cluster_name="${tags['cluster']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster')}",
+                namespace="${tags.singleValue('namespace')}",
                 element_type='agent'
               }[${__interval}]))
             alias: node
           - expression: |-
               max by (element_type)(max_over_time(stackstate_stackstate_receiver_unique_element_passed_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 element_type!='agent'
               }[${__interval}]))
             alias: ${element_type}

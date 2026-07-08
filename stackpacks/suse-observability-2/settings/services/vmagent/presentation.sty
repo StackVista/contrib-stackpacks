@@ -35,8 +35,8 @@ nodes:
         metricQueries:
           - expression: |-
               max(rate(stackstate_vm_persistentqueue_write_duration_seconds_total{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name=~".*-vmagent-.*",
               }[${__rate_interval}]))
             alias: "Write duration"
@@ -50,8 +50,8 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_vmagent_remotewrite_packets_dropped_total{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name=~".*-vmagent-.*",
               }[${__rate_interval}])) by(url)
             alias: "Data blocks dropped"
@@ -65,8 +65,8 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_vm_protoparser_rows_read_total{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name=~".*-vmagent-.*",
               }[${__rate_interval}])) by(type)
             alias: "Data points rate"
@@ -80,8 +80,8 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_vm_rows_invalid_total{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name=~".*-vmagent-.*",
               }[${__rate_interval}])) by(type)
             alias: "Invalid data points rate"
@@ -104,8 +104,8 @@ nodes:
           - expression: |-
               sum by (statefulset)(increase(stackstate_vm_rows_ignored_total{
                 pod_name=~".*-vmagent-.*",
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}"
               }[1h]))
             alias: vmagent
         chart:

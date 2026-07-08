@@ -50,9 +50,9 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (cluster_name, namespace, pod_name, le)(increase(stackstate_otelcol_receiver_accepted_metric_points{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
               }[${__rate_interval}]))
             alias: Metric points
         chart:
@@ -65,9 +65,9 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (cluster_name, namespace, pod_name, le)(increase(stackstate_otelcol_receiver_accepted_spans{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
               }[${__rate_interval}]))
             alias: Spans
         chart:
@@ -81,9 +81,9 @@ nodes:
           - expression: |-
               sum by (cluster_name, namespace, pod_name, type, signal)(
                 rate(stackstate_otelcol_connector_topology_topology_produced_total{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__rate_interval}])
               )
             alias: Components produced
@@ -98,9 +98,9 @@ nodes:
           - expression: |-
               sum by (cluster_name, namespace, pod_name, type)(
                 rate(stackstate_otelcol_connector_topology_mappings_removed_total{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__rate_interval}])
               )
             alias: Components produced
@@ -115,9 +115,9 @@ nodes:
           - expression: |-
               sum by (cluster_name, namespace, pod_name, type, signal)(
                 rate(stackstate_otelcol_connector_topology_mapping_errors_total{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__rate_interval}])
               )
             alias: Mapping errors
@@ -133,9 +133,9 @@ nodes:
               histogram_quantile(0.95,
                 sum by (le, cluster_name, namespace, pod_name, signal)(
                   rate(stackstate_otelcol_connector_topology_mapping_duration_seconds_bucket{
-                    cluster_name="${tags['cluster-name']}",
-                    namespace="${tags['namespace']}",
-                    pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                    cluster_name="${tags.singleValue('cluster-name')}",
+                    namespace="${tags.singleValue('namespace')}",
+                    pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                   }[${__rate_interval}])
                 )
               )
@@ -152,9 +152,9 @@ nodes:
               histogram_quantile(0.95,
                 sum by (le, cluster_name, namespace, pod_name, signal)(
                   rate(stackstate_otelcol_connector_topology_mapping_duration_seconds_bucket{
-                    cluster_name="${tags['cluster-name']}",
-                    namespace="${tags['namespace']}",
-                    pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                    cluster_name="${tags.singleValue('cluster-name')}",
+                    namespace="${tags.singleValue('namespace')}",
+                    pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                   }[${__rate_interval}])
                 )
               )
@@ -170,9 +170,9 @@ nodes:
           - expression: |-
               sum by (cluster_name, namespace, pod_name)(
                 rate(stackstate_otelcol_extension_sts_settings_provider_settings_snapshot_incomplete{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__rate_interval}])
               )
             alias: Incomplete snapshots
@@ -187,9 +187,9 @@ nodes:
           - expression: |-
               sum by (cluster_name, namespace, pod_name)(
                 rate(stackstate_otelcol_extension_sts_settings_provider_settings_snapshot_complete{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__rate_interval}])
               )
             alias: Successful snapshots
@@ -204,9 +204,9 @@ nodes:
           - expression: |
               sum by (cluster_name, namespace, pod_name, setting_type)(
                 rate(stackstate_otelcol_extension_sts_settings_provider_settings_count_by_type_sum{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__rate_interval}])
               )
             alias: Settings count by type
@@ -221,17 +221,17 @@ nodes:
           - expression: |
               sum by (cluster_name, namespace, setting_type)(
                 max_over_time(stackstate_otelcol_extension_sts_settings_provider_settings_size_by_type_bytes_sum{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__interval}])
               )
               /
               sum by (cluster_name, namespace, setting_type)(
                 max_over_time(stackstate_otelcol_extension_sts_settings_provider_settings_size_by_type_bytes_count{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
-                  pod_name="${tags['statefulset.kubernetes.io/pod-name']}"
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
+                  pod_name="${tags.singleValue('statefulset.kubernetes.io/pod-name')}"
                 }[${__interval}])
               )
             alias: Max average snapshot size (bytes)

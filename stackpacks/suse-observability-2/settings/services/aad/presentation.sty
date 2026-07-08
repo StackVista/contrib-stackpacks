@@ -32,7 +32,7 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (cluster_name, namespace, pod_name)(stackstate_spotlight_streams_checked{
-                cluster_name="${tags['cluster-name']}", namespace="${tags['namespace']}", pod_name="${name}"
+                cluster_name="${tags.singleValue('cluster-name')}", namespace="${tags.singleValue('namespace')}", pod_name="${name}"
               }[${__rate_interval}])
             alias: Streams checked
         chart:
@@ -45,7 +45,7 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.95, sum by (cluster_name, namespace, step, le)(rate(stackstate_spotlight_step_timings_seconds_bucket{
-                cluster_name="${tags['cluster-name']}", namespace="${tags['namespace']}", pod_name="${name}"
+                cluster_name="${tags.singleValue('cluster-name')}", namespace="${tags.singleValue('namespace')}", pod_name="${name}"
               }[5m])))
             alias: Step ${step}
         chart:
@@ -58,7 +58,7 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (cluster_name, namespace, step)(rate(stackstate_spotlight_step_timings_seconds_count{
-                cluster_name="${tags['cluster-name']}", namespace="${tags['namespace']}", pod_name="${name}"
+                cluster_name="${tags.singleValue('cluster-name')}", namespace="${tags.singleValue('namespace')}", pod_name="${name}"
               }[5m]))
             alias: Step ${step}
         chart:

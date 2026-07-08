@@ -28,9 +28,9 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (pod_name)(max_over_time(stackstate_stackstate_metrics_circuit_breaker_status{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }[${__interval}]))
             alias: "${pod_name}"
@@ -40,6 +40,7 @@ nodes:
 
   - _type: ComponentPresentation
     name: "SUSE Observability Metrics Store Clients - PromQL Hit"
+    title: "SUSE Observability Metrics Store Clients - PromQL Hit"
     description: "ComponentPresentation for SUSE Observability Metrics Store Clients - PromQL Hit"
     identifier: urn:stackpack:suse-observability-2:component-presentation:service-metrics-store-clients-promql-hit-deployment
     binding:
@@ -67,17 +68,17 @@ nodes:
         metricQueries:
           - expression: |
               sum by (cluster_name, namespace, pod_name) (rate(stackstate_caffeine_cache_hit{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               } )) / sum by (cluster_name, namespace, pod_name) (rate(stackstate_caffeine_cache_requests{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               } ))
             alias: hit % - ${pod_name}
             componentIdentifierTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
@@ -87,6 +88,7 @@ nodes:
 
   - _type: ComponentPresentation
     name: "SUSE Observability Metrics Store Clients - PromQL Hit"
+    title: "SUSE Observability Metrics Store Clients - PromQL Hit"
     description: "ComponentPresentation for SUSE Observability Metrics Store Clients - PromQL Hit"
     identifier: urn:stackpack:suse-observability-2:component-presentation:service-metrics-store-clients-promql-hit-pod
     binding:
@@ -114,12 +116,12 @@ nodes:
         metricQueries:
           - expression: |
               sum(rate(stackstate_caffeine_cache_hit{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               } )) / sum(rate(stackstate_caffeine_cache_requests{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               } ))
             alias: hit %

@@ -50,17 +50,17 @@ nodes:
         metricQueries:
           - expression: |-
               max by (gc, pod_name, cluster_name, namespace) (rate(stackstate_jvm_gc_collection_seconds_sum{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]) / rate(stackstate_jvm_gc_collection_seconds_count{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: ${gc} - ${pod_name}
         chart:
@@ -73,11 +73,11 @@ nodes:
         metricQueries:
           - expression: |-
               max by (gc, pod_name, cluster_name, namespace) (rate(stackstate_jvm_gc_collection_seconds_sum{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: ${gc} - ${pod_name}
         chart:
@@ -90,11 +90,11 @@ nodes:
         metricQueries:
           - expression: |-
               max by (gc, pod_name, cluster_name, namespace) (rate(stackstate_jvm_gc_collection_seconds_count{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: ${gc} - ${pod_name}
         chart:
@@ -108,52 +108,52 @@ nodes:
           - expression: |-
               max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_used_bytes{
                 area="heap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])) or max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_bytes_used{
                 area="heap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Used - ${pod_name}
           - expression: |-
               max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_max_bytes{
                 area="heap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])) or max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_bytes_max{
                 area="heap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Max - ${pod_name}
           - expression: |-
               max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_committed_bytes{
                 area="heap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])) or max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_bytes_committed{
                 area="heap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Committed - ${pod_name}
         chart:
@@ -167,52 +167,52 @@ nodes:
           - expression: |-
               max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_used_bytes{
                 area="nonheap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])) or max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_bytes_used{
                 area="nonheap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Used - ${pod_name}
           - expression: |-
               max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_max_bytes{
                 area="nonheap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])) or max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_bytes_max{
                 area="nonheap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Max - ${pod_name}
           - expression: |-
               max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_committed_bytes{
                 area="nonheap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])) or max by (pod_name, cluster_name, namespace) (max_over_time(stackstate_jvm_memory_bytes_committed{
                 area="nonheap", 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Committed - ${pod_name}
         chart:
@@ -225,29 +225,29 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (pod_name, namespace, cluster_name) (max_over_time(stackstate_jvm_threads_current{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Current - ${pod_name}
           - expression: |-
               sum by (pod_name, namespace, cluster_name) (max_over_time(stackstate_jvm_threads_current{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Peak - ${pod_name}
           - expression: |-
               sum by (pod_name, namespace, cluster_name) (max_over_time(stackstate_jvm_threads_deadlocked{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}]))
             alias: Deadlocked - ${pod_name}
         chart:
@@ -260,11 +260,11 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.95, (rate(stackstate_jvm_gc_duration_seconds_bucket{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])))
             alias: GC Name - ${jvm_gc_name} - pod - ${pod_name}
         chart:
@@ -277,11 +277,11 @@ nodes:
         metricQueries:
           - expression: |-
               rate(stackstate_jvm_gc_duration_seconds_count{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }[${__rate_interval}])
             alias: GC Name - ${jvm_gc_name} - pod - ${pod_name}
         chart:
@@ -294,11 +294,11 @@ nodes:
         metricQueries:
           - expression: |-
               stackstate_jvm_memory_used_after_last_gc_bytes{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}"
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}"
               }
             alias: Memory Pool - ${jvm_memory_pool_name} - pod - ${pod_name}
         chart:
@@ -311,11 +311,11 @@ nodes:
         metricQueries:
           - expression: |-
               stackstate_jvm_memory_used_bytes{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 jvm_memory_type="heap"
               }
             alias: Memory Pool - ${jvm_memory_pool_name} - pod - ${pod_name}
@@ -329,11 +329,11 @@ nodes:
         metricQueries:
           - expression: |-
               stackstate_jvm_memory_used_bytes{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_name="${tags['app.kubernetes.io/name']}",
-                kube_app_instance="${tags['app.kubernetes.io/instance']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_name="${tags.singleValue('app.kubernetes.io/name')}",
+                kube_app_instance="${tags.singleValue('app.kubernetes.io/instance')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 jvm_memory_type="non_heap"
               }
             alias: Memory Pool - ${jvm_memory_pool_name} - pod - ${pod_name}

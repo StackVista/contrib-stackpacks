@@ -46,15 +46,15 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Http
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Connections
@@ -68,8 +68,8 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, rate(stackstate_stackstate_correlate_received_data_latency_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }))
             alias: Latency to ${data_type}
@@ -83,8 +83,8 @@ nodes:
         metricQueries:
           - expression: |-
               avg_over_time(stackstate_stackstate_correlate_unique_active_element_approx_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__interval}])
             alias: "${element_type}"
@@ -98,8 +98,8 @@ nodes:
         metricQueries:
           - expression: |-
               avg_over_time(stackstate_stackstate_correlate_element_create_approx_count{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__interval}])
             alias: "${element_type}"
@@ -113,8 +113,8 @@ nodes:
         metricQueries:
           - expression: |-
               avg_over_time(stackstate_stackstate_correlate_buffer_occupancy{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__interval}])
             alias: "${correlation_type}"
@@ -128,36 +128,36 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Total
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_correlated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Correlated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_uncorrelated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Uncorrelated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_subsumed{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Subsumed
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_http_observations_data_dropped{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Dropped
@@ -171,36 +171,36 @@ nodes:
         metricQueries:
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_added_to_state{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Total
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_correlated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Correlated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_uncorrelated{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Uncorrelated
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_endpoints_data_dropped{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Dropped
           - expression: |-
               sum(rate(stackstate_stackstate_correlate_ambiguous_endpoints{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[${__rate_interval}]))
             alias: Ambiguous

@@ -33,9 +33,9 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, rate(stackstate_stackstate_health_sync_latency_seconds_bucket{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }))
             alias: ${pod_name} - ${partition}
@@ -49,9 +49,9 @@ nodes:
         metricQueries:
           - expression: |-
               stackstate_stackstate_health_sync_all_check_state_message_rate{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }
             alias: ${pod_name} - ${stream}
@@ -65,9 +65,9 @@ nodes:
         metricQueries:
           - expression: |-
               stackstate_health_sync_all_check_state_operation_rate{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               } > 0
             alias: ${pod_name} - ${stream} - ${operation}
@@ -81,9 +81,9 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (pod_name, topic) (stackstate_kafka_consumer_consumer_fetch_manager_metrics_records_lag{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               })
             alias: ${pod_name} - ${topic}

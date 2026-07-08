@@ -1,6 +1,7 @@
 nodes:
   - _type: ComponentPresentation
     name: "SUSE Observability Stackgraph pods"
+    title: "SUSE Observability Stackgraph pods"
     description: "ComponentPresentation for SUSE Observability Stackgraph pods"
     identifier: urn:stackpack:suse-observability-2:component-presentation:stackgraph-pods
     binding:
@@ -32,15 +33,15 @@ nodes:
         metricQueries:
           - expression: |-
               sum(stackstate_stackgraph_readcache_size_bytes{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               })
             alias: Used
           - expression: |-
               sum(stackstate_stackgraph_readcache_max_size_bytes{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               })
             alias: Max
@@ -54,23 +55,23 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.50, (sum by (le) (rate(stackstate_stackgraph_readcache_retention_time_ms{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[20m])) or sum by (le) (rate(stackstate_stackgraph_readcache_retention_time_ms_bucket{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[20m]))))
             alias: 0.5 quantile
           - expression: |-
               histogram_quantile(0.95, (sum by (le) (rate(stackstate_stackgraph_readcache_retention_time_ms{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[20m])) or sum by (le) (rate(stackstate_stackgraph_readcache_retention_time_ms_bucket{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }[20m]))))
             alias: 0.95 quantile
@@ -84,8 +85,8 @@ nodes:
         metricQueries:
           - expression: |-
               histogram_quantile(0.98, rate(stackstate_stackgraph_transaction_duration_seconds_bucket{ 
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
                 pod_name="${name}"
               }))
             alias: Used - ${name}

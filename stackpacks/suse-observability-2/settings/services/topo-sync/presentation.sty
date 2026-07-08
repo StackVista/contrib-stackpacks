@@ -43,9 +43,9 @@ nodes:
         metricQueries:
           - expression: |-
               stackstate_stackstate_sync_topo_total_counts{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }
             alias: ${pod_name} - ${element_type}s
@@ -62,9 +62,9 @@ nodes:
                 start_stage="source",
                 end_stage="commit",
                 quantile="1.0",
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               })
             alias: ${pod_name} - ${integration_type}
@@ -81,9 +81,9 @@ nodes:
                 start_stage="enterReceiver",
                 end_stage="commit",
                 quantile="1.0",
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               })
             alias: ${pod_name} - ${integration_type}
@@ -97,14 +97,14 @@ nodes:
         metricQueries:
           - expression: |-
               (sum by (node_id, operation_type, pod_name)(rate(stackstate_stackstate_sync_extTopo_changes{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }[1m])) or sum by (node_id, operation_type, pod_name)(rate(stackstate_stackstate_sync_extTopo_changes_total{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               }[1m]))) > 0
             alias: ${pod_name} - ${node_id} - ${operation_type}
@@ -118,9 +118,9 @@ nodes:
         metricQueries:
           - expression: |-
               sum by (pod_name, topic) (stackstate_kafka_consumer_consumer_fetch_manager_metrics_records_lag{
-                cluster_name="${tags['cluster-name']}",
-                namespace="${tags['namespace']}",
-                kube_app_component="${tags['app.kubernetes.io/component']}",
+                cluster_name="${tags.singleValue('cluster-name')}",
+                namespace="${tags.singleValue('namespace')}",
+                kube_app_component="${tags.singleValue('app.kubernetes.io/component')}",
                 kube_app_name=~"stackstate|stackstate-k8s|suse-observability"
               })
             alias: ${pod_name} - ${topic}
@@ -135,12 +135,12 @@ nodes:
           - expression: |-
               max by (storage)(label_replace(
                 max_over_time(kubernetes_kubelet_volume_stats_used_bytes{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
                   persistentvolumeclaim=~".*-(kafka-\\d|hbase-.*|sync-tmp)"
                 }[5m]) / max_over_time(kubernetes_kubelet_volume_stats_capacity_bytes{
-                  cluster_name="${tags['cluster-name']}",
-                  namespace="${tags['namespace']}",
+                  cluster_name="${tags.singleValue('cluster-name')}",
+                  namespace="${tags.singleValue('namespace')}",
                   persistentvolumeclaim=~".*-(kafka-\\d|hbase-.*|sync-tmp)"
                 }[5m]), "storage", "$1", "persistentvolumeclaim", ".*-(kafka-.*|hbase-.*|sync-tmp)"))
             alias: ${storage}
