@@ -1,7 +1,7 @@
-name: Stackpacks CI
+name: Contrib Stackpacks CI
 
 run-name: >-
-  stackpacks -
+  contrib stackpacks -
   ${{ github.event_name == 'pull_request' && format('PR #{0} {1}', github.event.number, github.event.pull_request.title) ||
       github.event_name == 'workflow_dispatch' && 'manual rebuild' ||
       github.event_name == 'push' && format('{0}: {1}', github.ref_name, github.event.head_commit.message) ||
@@ -11,11 +11,6 @@ on:
   pull_request:
   push:
     branches: [main]
-    tags:
-      - notification-operator-*
-      - otel-k8s-crd-*
-      - open-telemetry-2-*
-      - suse-observability-2-*
   workflow_dispatch:
     inputs:
       build_docker_image:
@@ -35,147 +30,18 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  setup:
-    name: Resolve run conditions
-    runs-on: ubuntu-slim
-    outputs:
-      is_master: ${{ steps.cond.outputs.is_master }}
-      is_pr: ${{ steps.cond.outputs.is_pr }}
-      is_dispatch_build: ${{ steps.cond.outputs.is_dispatch_build }}
-      is_tag: ${{ steps.cond.outputs.is_tag }}
-      tag_pack: ${{ steps.cond.outputs.tag_pack }}
-      v2_matrix: ${{ steps.cond.outputs.v2_matrix }}
-    steps:
-      - name: Check out repository
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-
-      - name: Compute conditions
-        id: cond
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF: ${{ github.ref }}
-          REF_TYPE: ${{ github.ref_type }}
-          REF_NAME: ${{ github.ref_name }}
-          DISPATCH_BUILD: ${{ github.event_name == 'workflow_dispatch' && inputs.build_docker_image || 'false' }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          STACKPACKS: >-
-            open-telemetry-2 otel-k8s-crd notification-operator suse-observability-2
-        run: |
-          is_master=false
-          is_pr=false
-          is_dispatch_build=false
-          is_tag=false
-          tag_pack=""
-
-          if [[ "${EVENT_NAME}" == "push" && ( "${REF}" == "refs/heads/master" || "${REF}" == "refs/heads/main" ) ]]; then
-            is_master=true
-          fi
-          if [[ "${EVENT_NAME}" == "pull_request" ]]; then
-            is_pr=true
-          fi
-          if [[ "${DISPATCH_BUILD}" == "true" ]]; then
-            is_dispatch_build=true
-          fi
-          if [[ "${REF_TYPE}" == "tag" ]]; then
-            is_tag=true
-            # Longest-prefix match handles packs whose name shares a prefix (e.g. stackstate vs stackstate-tenants)
-            # and tag versions that contain '-' (e.g. 1.0.0-rc1)
-            matched=""
-            for pack in ${STACKPACKS}; do
-              if [[ "${REF_NAME}" == "${pack}-"* && ${#pack} -gt ${#matched} ]]; then
-                matched="${pack}"
-              fi
-            done
-            tag_pack="${matched}"
-          fi
-
-          # Per-pack gating: master / PR / dispatch always include every pack; tag includes only the matching pack.
-          run_for_pack() {
-            local pack="$1"
-            if [[ "${is_master}" == "true" || "${is_pr}" == "true" || "${is_dispatch_build}" == "true" ]]; then
-              echo true
-              return
-            fi
-            if [[ "${is_tag}" == "true" && "${tag_pack}" == "${pack}" ]]; then
-              echo true
-              return
-            fi
-            echo false
-          }
-
-          # PR path-based filtering: on PRs, drop V1/V2 matrix entries whose sources didn't change.
-          # Non-PR runs (master/tag/dispatch) keep the existing baseline from run_for_pack.
-          changed_files=""
-          force_all=false
-          if [[ "${is_pr}" == "true" ]]; then
-            changed_files=$(git diff --name-only "${PR_BASE_SHA}...HEAD" || true)
-            # V2 packs only share the workflow itself.
-            if printf '%s\n' "${changed_files}" | grep -qE '^\.github/(workflows|actions)/'; then
-              force_all=true
-            fi
-          fi
-
-          pack_changed() {
-            local pack="$1"
-            [[ -z "${changed_files}" ]] && return 1
-            printf '%s\n' "${changed_files}" | grep -qE "^stackpacks/${pack}/"
-          }
-
-          in_list() {
-            local needle="$1" haystack="$2" item
-            for item in ${haystack}; do
-              [[ "${item}" == "${needle}" ]] && return 0
-            done
-            return 1
-          }
-
-          include_v2_pack() {
-            local pack="$1"
-            if [[ "${is_pr}" != "true" ]]; then
-              [[ "$(run_for_pack "${pack}")" == "true" ]]
-              return
-            fi
-            [[ "${force_all}" == "true" ]] && return 0
-            pack_changed "${pack}"
-          }
-
-          build_matrix() {
-            local include_fn="$1"
-            local pack_list="$2"
-            local entries=()
-            for pack in ${pack_list}; do
-              if "${include_fn}" "${pack}"; then
-                entries+=("\"${pack}\"")
-              fi
-            done
-            local IFS=,
-            echo "[${entries[*]}]"
-          }
-
-          v2_matrix=$(build_matrix include_v2_pack "${STACKPACKS}")
-
-          {
-            echo "is_master=${is_master}"
-            echo "is_pr=${is_pr}"
-            echo "is_dispatch_build=${is_dispatch_build}"
-            echo "is_tag=${is_tag}"
-            echo "tag_pack=${tag_pack}"
-            echo "v2_matrix=${v2_matrix}"
-          } >> "${GITHUB_OUTPUT}"
 
   validate:
     name: validate (${{ matrix.stackpack }})
-    needs: [setup]
-    if: needs.setup.outputs.v2_matrix != '[]'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        stackpack: ${{ fromJSON(needs.setup.outputs.v2_matrix) }}
+        stackpack: 
+          - open-telemetry-2
+          - otel-k8s-crd
+          - notification-operator
+          - suse-observability-2
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -197,16 +63,19 @@ jobs:
 
   package:
     name: package (${{ matrix.stackpack }})
-    needs: [setup, validate]
+    needs: [validate]
     if: |
       always() &&
-      needs.setup.outputs.v2_matrix != '[]' &&
       needs.validate.result == 'success'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        stackpack: ${{ fromJSON(needs.setup.outputs.v2_matrix) }}
+        stackpack: 
+          - open-telemetry-2
+          - otel-k8s-crd
+          - notification-operator
+          - suse-observability-2
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -233,25 +102,18 @@ jobs:
       - name: Package and publish ${{ matrix.stackpack }}
         env:
           STACKPACK: ${{ matrix.stackpack }}
-          IS_TAG: ${{ needs.setup.outputs.is_tag }}
-          TAG_PACK: ${{ needs.setup.outputs.tag_pack }}
-          REF_NAME: ${{ github.ref_name }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           RUN_NUMBER: ${{ github.run_number }}
           SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
         run: |
           cd "stackpacks/${STACKPACK}"
           base_version=$(yq -r '.version' stackpack.yaml)
           echo "Version from stackpack.yaml: ${base_version}"
-
-          if [[ "${IS_TAG}" == "true" && "${TAG_PACK}" == "${STACKPACK}" ]]; then
-            tag_version="${REF_NAME#${STACKPACK}-}"
-            if [[ "${tag_version}" != "${base_version}" ]]; then
-              echo "ERROR: tag version (${tag_version}) does not match stackpack.yaml version (${base_version})" >&2
-              exit 1
-            fi
-            stackpack_version="${base_version}"
-            is_release=true
+ 
+          if [[ "${EVENT_NAME}" == "push" && "${REF}" == "refs/heads/main" ]]; then
+            stackpack_version=${base_version}
           else
             major=$(echo "${base_version}" | cut -d. -f1)
             minor=$(echo "${base_version}" | cut -d. -f2)
@@ -261,7 +123,6 @@ jobs:
             short_sha="${SHA:0:7}"
             stackpack_version="${major}.${minor}.${new_patch}-${branch_sanitized}-${RUN_NUMBER}-${short_sha}-SNAPSHOT"
             sed -i "s/^version: .*/version: \"${stackpack_version}\"/" stackpack.yaml
-            is_release=false
           fi
 
           export STS_EXPERIMENTAL_STACKPACKS=1
@@ -277,20 +138,43 @@ jobs:
           path: stackpacks/${{ matrix.stackpack }}/target/*.sts
           if-no-files-found: error
 
+  check-version-bump:
+    name: Check version bump
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        stackpack: 
+          - open-telemetry-2
+          - otel-k8s-crd
+          - notification-operator
+          - suse-observability-2
+    env:
+      TARGET_BRANCH: ${{ github.base_ref || 'main' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends yq
+
+      - name: Compare versions
+        run: ./scripts/ci/verify_versions_bumped.sh ${{ matrix.stackpack }}
+
   build-and-push-docker-image:
     name: Docker image build, scan, and push
-    needs:
-      - setup
-      - package
+    needs: [package]
     if: |
-      always()
-#      (needs.package.result == 'success' || needs.package.result == 'skipped') &&
-#      (needs.setup.outputs.is_master == 'true' || needs.setup.outputs.is_dispatch_build == 'true')
+      always() &&
+      (needs.package.result == 'success' || needs.package.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
       id-token: write
-      packages: write
     strategy:
       fail-fast: false
     steps:
