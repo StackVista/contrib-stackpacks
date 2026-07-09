@@ -12,11 +12,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      build_docker_image:
-        description: Force docker image builds even on non-master
-        type: boolean
-        default: false
 
 permissions:
   contents: read
@@ -170,6 +165,7 @@ jobs:
     needs: [package]
     if: |
       always() &&
+      github.reposity == 'StackVista/contrib-stackpacks' &&
       (needs.package.result == 'success' || needs.package.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
@@ -298,3 +294,17 @@ jobs:
           target-registry: quay.io
           target-registry-user: ${{ secrets.QUAY_USER }}
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  update-stackpacks-version-in-helm:
+    name: Update stackpacks version in helm-charts-internal
+    needs:
+      - build-and-push-docker-image
+    if: |
+      always() &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.build-and-push-docker-image.result == 'success'
+    uses: ./.github/workflows/update-stackpacks-version-in-helm.yml
+    secrets:
+      HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID }}
+      HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY }}
+
