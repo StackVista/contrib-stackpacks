@@ -14,26 +14,27 @@ nodes:
         - filterId: "crd_cluster"
         - filterId: "crd_api_group"
         - filterId: "crd_kind"
+        - filterId: "crd_custom_resources_watched"
       overview:
         name:
           singular: "custom resource definition"
           plural: "custom resource definitions"
           title: "Custom Resource Definitions"
         mainMenu:
-          group: "Custom Resources"
+          group: "Kubernetes"
           order: 2
         columns:
-          - columnId: health
-            title: "Health"
-            projection:
-              _type: "HealthProjection"
-              value: "healthState"
           - columnId: crd_name
             title: "Name"
             projection:
               _type: "ComponentLinkProjection"
               name: "name"
               identifier: "identifiers[0]"
+          - columnId: crd_crs_collected
+            title: "CRs collected"
+            projection:
+              _type: "TextProjection"
+              value: "tags.singleValue('k8s.crd.custom_resources_watched')"
           - columnId: crd_api_group
             title: "API Group"
             projection:
@@ -93,7 +94,7 @@ nodes:
             projection:
               _type: "TagProjection"
         provisioning:
-          externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:otel-k8s-crd:otel-component-mapping:custom-resource-definition'"
+          topologySourceSelector: "source.identifier == identifiers[0]"
           showConfiguration: true
           showStatus: true
         relatedResources:
