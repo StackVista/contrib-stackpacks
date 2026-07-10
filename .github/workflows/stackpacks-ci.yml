@@ -25,6 +25,14 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  debug:
+    name: debug
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Write GitHub context to log
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
 
   validate:
     name: validate (${{ matrix.stackpack }})
