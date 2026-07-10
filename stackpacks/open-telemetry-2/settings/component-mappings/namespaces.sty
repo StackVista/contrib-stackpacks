@@ -15,8 +15,6 @@ nodes:
         value: "resource.attributes['service.namespace']"
       - name: "clusterName"
         value: "resource.attributes['k8s.cluster.name']"
-      - name: "k8sNamespaceName"
-        value: "resource.attributes['k8s.namespace.name']"
     output:
       identifier: "'urn:opentelemetry:namespace/' + vars.namespace"
       name: "vars.namespace"
@@ -27,14 +25,14 @@ nodes:
             target: "stackpack"
           - source: "vars.clusterName"
             target: "cluster-name"
-          - source: "vars.k8sNamespaceName"
-            target: "namespace"
-          - source: "vars.clusterName + '/' + vars.k8sNamespaceName"
-            target: "k8s-scope"
       optional:
         tags:
           - source: "resource.attributes['deployment.environment']"
             target: "deployment-environment"
+          - source: "vars.clusterName + '/' + resource.attributes['k8s.namespace.name']"
+            target: "k8s-scope"
+          - source: "resource.attributes['k8s.namespace.name']"
+            target: "namespace"
     expireAfter: 900000
     rank:
       specificity: 100

@@ -9,13 +9,10 @@ nodes:
         - "METRICS"
       resource:
         action: "'CREATE'"
-        condition: "'service.namespace' in resource.attributes"
+        condition: "'service.instance.id' in resource.attributes"
     vars:
       - name: "namespace"
-        value: >-
-          'service.namespace' in resource.attributes ?
-          resource.attributes['service.namespace'] :
-          'default'
+        value: "resource.attributes['service.namespace']"
       - name: "service"
         value: "resource.attributes['service.name']"
       - name: "version"
@@ -24,19 +21,11 @@ nodes:
           resource.attributes['service.version'] :
           'undefined'
       - name: "instanceId"
-        value: >-
-          'service.instance.id' in resource.attributes ?
-          resource.attributes['service.instance.id'] :
-          resource.attributes['service.name']
+        value: "resource.attributes['service.instance.id']"
       - name: "instanceName"
-        value: >-
-          'service.instance.id' in resource.attributes ?
-          resource.attributes['service.name'] + " - " + resource.attributes['service.instance.id'] :
-          resource.attributes['service.name'] + " - instance"
+        value: "resource.attributes['service.name'] + ' - ' + resource.attributes['service.instance.id']"
       - name: "clusterName"
         value: "resource.attributes['k8s.cluster.name']"
-      - name: "k8sNamespaceName"
-        value: "resource.attributes['k8s.namespace.name']"
     output:
       identifier: >-
         'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service + ':serviceInstance/' + vars.instanceId
@@ -53,10 +42,6 @@ nodes:
             target: "service.namespace"
           - source: "vars.clusterName"
             target: "cluster-name"
-          - source: "vars.k8sNamespaceName"
-            target: "namespace"
-          - source: "vars.clusterName + '/' + vars.k8sNamespaceName"
-            target: "k8s-scope"
           - source: "resource.attributes"
             pattern: "(.*)"
             target: "${1}"
@@ -64,6 +49,10 @@ nodes:
         tags:
           - source: "resource.attributes['deployment.environment']"
             target: "deployment-environment"
+          - source: "vars.clusterName + '/' + resource.attributes['k8s.namespace.name']"
+            target: "k8s-scope"
+          - source: "resource.attributes['k8s.namespace.name']"
+            target: "namespace"
     expireAfter: 900000
     rank:
       specificity: 210
