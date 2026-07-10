@@ -32,7 +32,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stackpack: 
+        stackpack:
           - open-telemetry-2
           - otel-k8s-crd
           - notification-operator
@@ -66,7 +66,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stackpack: 
+        stackpack:
           - open-telemetry-2
           - otel-k8s-crd
           - notification-operator
@@ -106,7 +106,7 @@ jobs:
           cd "stackpacks/${STACKPACK}"
           base_version=$(yq -r '.version' stackpack.yaml)
           echo "Version from stackpack.yaml: ${base_version}"
- 
+
           if [[ "${EVENT_NAME}" == "push" && "${REF}" == "refs/heads/main" ]]; then
             stackpack_version=${base_version}
           else
@@ -139,7 +139,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        stackpack: 
+        stackpack:
           - open-telemetry-2
           - otel-k8s-crd
           - notification-operator
@@ -166,8 +166,12 @@ jobs:
     needs: [package]
     if: |
       always() && (
-        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'StackVista')
-        || (github.event_name =='push' && github.event.push.repository.owner.login == 'StackVista')
+        (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.name == 'contrib-stackpacks' &&
+          github.event.pull_request.head.repo.owner.login == 'StackVista')
+        || (github.event_name =='push' &&
+          github.event.push.repository.name == 'contrib-stackpacks' &&
+          github.event.push.repository.owner.login == 'StackVista')
       ) && (needs.package.result == 'success' || needs.package.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
