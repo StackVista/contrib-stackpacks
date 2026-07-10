@@ -165,9 +165,10 @@ jobs:
     name: Docker image build, scan, and push
     needs: [package]
     if: |
-      always() &&
-      github.reposity == 'StackVista/contrib-stackpacks' &&
-      (needs.package.result == 'success' || needs.package.result == 'skipped')
+      always() && (
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.organization == 'StackVista')
+        || (github.event_name =='push' && github.event.push.repository == 'StackVista/contrib-stackpacks')
+      ) && (needs.package.result == 'success' || needs.package.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
