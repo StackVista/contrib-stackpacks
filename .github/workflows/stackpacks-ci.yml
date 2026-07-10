@@ -1,0 +1,315 @@
+name: Contrib Stackpacks CI
+
+run-name: >-
+  contrib stackpacks -
+  ${{ github.event_name == 'pull_request' && format('PR #{0} {1}', github.event.number, github.event.pull_request.title) ||
+      github.event_name == 'workflow_dispatch' && 'manual rebuild' ||
+      github.event_name == 'push' && format('{0}: {1}', github.ref_name, github.event.head_commit.message) ||
+      github.ref_name }}
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash --noprofile --norc -euo pipefail {0}
+
+concurrency:
+  group: contrib-stackpacks-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+
+  validate:
+    name: validate (${{ matrix.stackpack }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        stackpack:
+          - open-telemetry-2
+          - otel-k8s-crd
+          - notification-operator
+          - suse-observability-2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Validate ${{ matrix.stackpack }}
+        env:
+          STACKPACK: ${{ matrix.stackpack }}
+          # Pinned snapshot of stackstate-server providing /opt/docker/bin/stack-pack-validator.
+          # Bumped manually when validating a newer stackstate-server release.
+          VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:b7c3604-2.5
+        run: |
+          docker run --rm \
+            -v "${PWD}:/workspace" \
+            -w /workspace \
+            "${VALIDATOR_IMAGE}" \
+            /opt/docker/bin/stack-pack-validator -directory "/workspace/stackpacks/${STACKPACK}"
+
+  package:
+    name: package (${{ matrix.stackpack }})
+    needs: [validate]
+    if: |
+      always() &&
+      needs.validate.result == 'success'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        stackpack:
+          - open-telemetry-2
+          - otel-k8s-crd
+          - notification-operator
+          - suse-observability-2
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends yq
+
+      - name: Install StackState CLI
+        run: |
+          version=$(curl --fail --silent --show-error https://dl.stackstate.com/stackstate-cli/LATEST_VERSION)
+          version="${version#v}"
+          arch=$(uname -m)
+          tmp=$(mktemp -d)
+          curl --fail --silent --show-error --location \
+            "https://dl.stackstate.com/stackstate-cli/v${version}/stackstate-cli-${version}.linux-${arch}.tar.gz" \
+            | tar xz -C "${tmp}"
+          sudo install -m 0755 "${tmp}/sts" /usr/local/bin/sts
+          sts version
+
+      - name: Package and publish ${{ matrix.stackpack }}
+        env:
+          STACKPACK: ${{ matrix.stackpack }}
+          BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          SHA: ${{ github.sha }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+        run: |
+          cd "stackpacks/${STACKPACK}"
+          base_version=$(yq -r '.version' stackpack.yaml)
+          echo "Version from stackpack.yaml: ${base_version}"
+
+          if [[ "${EVENT_NAME}" == "push" && "${REF}" == "refs/heads/main" ]]; then
+            stackpack_version=${base_version}
+          else
+            major=$(echo "${base_version}" | cut -d. -f1)
+            minor=$(echo "${base_version}" | cut -d. -f2)
+            patch=$(echo "${base_version}" | cut -d. -f3)
+            new_patch=$((patch + 1))
+            branch_sanitized=$(echo "${BRANCH_NAME}" | sed 's/[^a-zA-Z0-9]/-/g')
+            short_sha="${SHA:0:7}"
+            stackpack_version="${major}.${minor}.${new_patch}-${branch_sanitized}-${RUN_NUMBER}-${short_sha}-SNAPSHOT"
+            sed -i "s/^version: .*/version: \"${stackpack_version}\"/" stackpack.yaml
+          fi
+
+          export STS_EXPERIMENTAL_STACKPACKS=1
+          sts stackpack package
+          mkdir -p target
+          mv -- *.sts target/
+          ls -lh target/*.sts
+
+      - name: Upload ${{ matrix.stackpack }} sts artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sts-${{ matrix.stackpack }}
+          path: stackpacks/${{ matrix.stackpack }}/target/*.sts
+          if-no-files-found: error
+
+  check-version-bump:
+    name: Check version bump
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        stackpack:
+          - open-telemetry-2
+          - otel-k8s-crd
+          - notification-operator
+          - suse-observability-2
+    env:
+      TARGET_BRANCH: ${{ github.base_ref || 'main' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true
+          fetch-depth: 0
+
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends yq
+
+      - name: Compare versions
+        run: ./scripts/ci/verify_versions_bumped.sh ${{ matrix.stackpack }}
+
+  build-and-push-docker-image:
+    name: Docker image build, scan, and push
+    needs: [package]
+    if: |
+      always() && (
+        (github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.name == 'contrib-stackpacks' &&
+          github.event.pull_request.head.repo.owner.login == 'StackVista')
+        || (github.event_name =='push' &&
+          github.event.push.repository.name == 'contrib-stackpacks' &&
+          github.event.push.repository.owner.login == 'StackVista')
+      ) && (needs.package.result == 'success' || needs.package.result == 'skipped')
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Download stackpack artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: sts-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Stage stackpacks
+        run: |
+          dest=docker/rootfs/stackpacks
+          rm -rf "${dest}"
+          mkdir -p "${dest}"
+          cp artifacts/*.sts "${dest}/"
+
+      - name: Compute image tag
+        id: tag
+        run: |
+          git_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          git_commit_sha_short=$(git rev-parse --short=7 HEAD)
+          git_last_commit_timestamp=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:'%Y%m%d%H%M%S')
+          echo "value=${git_last_commit_timestamp}-${git_branch}-${git_commit_sha_short}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
+        with:
+          image: tonistiigi/binfmt:qemu-v10.0.4
+          cache-image: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+
+      - name: Build local image for scan
+        id: local-image
+        env:
+          TAG: ${{ steps.tag.outputs.value }}
+        run: |
+          local_ref="local/contrib-stackpacks:${TAG}"
+          docker buildx build \
+            --platform linux/amd64 \
+            --load \
+            --provenance=false \
+            --sbom=false \
+            --tag "${local_ref}" \
+            docker
+          echo "ref=${local_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Smoke test image
+        env:
+          LOCAL_IMAGE_REF: ${{ steps.local-image.outputs.ref }}
+        run: |
+          mkdir -p smoke-output
+          docker run --rm -v "${PWD}/smoke-output:/output" "${LOCAL_IMAGE_REF}" /output
+          copied=$(find smoke-output -type f -name '*.sts' | wc -l | tr -d ' ')
+          if [[ "${copied}" -eq 0 ]]; then
+            echo "Smoke test produced no .sts files" >&2
+            exit 1
+          fi
+
+      - name: Scan image
+        uses: StackVista/image-pipeline/.github/actions/scan-image@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        with:
+          image: ${{ steps.local-image.outputs.ref }}
+          mode: gate
+          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          with-grype: true
+          upload-sarif: false
+
+      - name: Apply OCI labels
+        id: oci-labels
+        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        with:
+          image-name: contrib-stackpacks
+          tag: ${{ steps.tag.outputs.value }}
+          title: SUSE Observability Community Stackpacks
+          description: Community stackpacks distribution bundle
+          component: contrib-stackpacks
+          dockerfile: docker/Dockerfile
+          base-name: registry.suse.com/bci/bci-minimal:15.7
+
+      - name: Push single-arch image (amd64)
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        with:
+          image: quay.io/stackstate/contrib-stackpacks
+          tag: ${{ steps.tag.outputs.value }}
+          arch: amd64
+          docker-context: docker
+          dockerfile: docker/Dockerfile
+          labels: ${{ steps.oci-labels.outputs.labels }}
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Push single-arch image (arm64)
+        uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        with:
+          image: quay.io/stackstate/contrib-stackpacks
+          tag: ${{ steps.tag.outputs.value }}
+          arch: arm64
+          docker-context: docker
+          dockerfile: docker/Dockerfile
+          labels: ${{ steps.oci-labels.outputs.labels }}
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+      - name: Merge multi-arch manifest
+        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        with:
+          image: quay.io/stackstate/contrib-stackpacks
+          tag: ${{ steps.tag.outputs.value }}
+          arches: amd64,arm64
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
+
+  update-stackpacks-version-in-helm:
+    name: Update stackpacks version in helm-charts-internal
+    needs:
+      - build-and-push-docker-image
+    if: |
+      always() &&
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      needs.build-and-push-docker-image.result == 'success'
+    uses: ./.github/workflows/update-stackpacks-version-in-helm.yml
+    secrets:
+      HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID }}
+      HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY }}
+

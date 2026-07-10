@@ -1,0 +1,14 @@
+Notification Details:
+  - cluster: {{ labels.cluster_name }}
+  - notification: {{ labels.notification_name }}
+  - notification CR name: {{ labels.name }}
+  - notification CR namespace: {{ labels.namespace }}
+
+The SUSE Observability Notification can be disabled for the following reasons:
+- By Deployment pipeline to avoid false positive alerts during redeployments.
+
+The possible causes for this issue are:
+- Deployment pipeline using this Notification has not been completed yet.
+- Deployment pipeline using this Notification failed to complete or delete the notification.
+
+Check the Deployment pipeline to find out more.

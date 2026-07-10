@@ -1,0 +1,192 @@
+nodes:
+  - _type: ComponentPresentation
+    name: "Otel Databases presentation"
+    description: "ComponentPresentation for Otel Services"
+    identifier: urn:stackpack:open-telemetry-2:component-presentation:database
+    binding:
+      _type: ComponentPresentationQueryBinding
+      query: (label IN ("stackpack:open-telemetry") AND type IN ("database"))
+    rank:
+      specificity: 10
+    presentation:
+      icon: !icon databases.svg
+      filters:
+        - filterId: "otel_namespace"
+        - filterId: "otel_service"
+      topology:
+        groupingEnabled: true
+        showIndirectRelations: false
+        minimumGroupSize: 8
+        groupedByLayers: false
+        groupedByDomains: true
+        autoGrouping: true
+        connectedComponents: true
+      overview:
+        name:
+          singular: "database"
+          plural: "databases"
+          title: "Databases"
+        mainMenu:
+          group: "Open Telemetry"
+          order: 98
+        columns:
+          - columnId: health
+          - columnId: "otel_name"
+            title: "Database"
+          - columnId: otel_namespace
+          - columnId: otel_database_span_error_rate
+            title: Span error %
+            projection:
+              _type: MetricProjection
+              sparkline: true
+              decimalPlaces: 2
+              unit: percentunit
+              query: |-
+                sum by(client_service_namespace, client, server) (rate(traces_service_graph_request_failed_total{
+                  client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+                }[5m]) or 0) / sum by (client_service_namespace, client, server)(rate(traces_service_graph_request_total{
+                  client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+                }[5m]))
+              metricId: database-spans-error-rate
+          - columnId: otel_database_span_duration
+            title: Span duration
+            projection:
+              _type: MetricProjection
+              sparkline: true
+              decimalPlaces: 2
+              unit: s
+              query: |-
+                histogram_quantile(0.95, sum(rate(traces_service_graph_request_client_seconds_bucket{
+                  client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+                }[${__rate_interval}])) by (client_service_namespace, client, server, le))
+              metricId: database-spans-duration
+          - columnId: otel_database_span_rate
+            title: Span rate
+            projection:
+              _type: MetricProjection
+              sparkline: true
+              decimalPlaces: 2
+              unit: cps
+              query: |-
+                sum by (client_service_namespace, client, server)(rate(traces_service_graph_request_total{
+                  client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+                }[5m]))
+              metricId: database-spans-rate
+        sort:
+          - columnId: health
+          - columnId: otel_name
+      highlight:
+        title: "Otel database"
+        fields: []
+        provisioning:
+          externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry-2:otel-component-mapping:database'"
+          showConfiguration: false
+          showStatus: false
+        relatedResources:
+          - resourceId: "otel_database_service_instances"
+            title: "Related service instances"
+            order: 2.0
+            topologyQuery: '(withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1")) and type = "otel service instance"'
+            presentationIdentifier: "urn:stackpack:open-telemetry-2:component-presentation:service-instance"
+          - resourceId: "otel_datbase_services"
+            title: "Related services"
+            order: 1.0
+            topologyQuery: '(withNeighborsOf(direction = "up", components = (withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1") and type = "otel service instance") , levels = "1") and type = "otel service")'
+            presentationIdentifier: "urn:stackpack:open-telemetry-2:component-presentation:service"
+        metrics:
+          - sectionId: traces
+            title: "Traces"
+            description: "Rate, Errors and Duration metrics for the trace spans"
+            order: 100
+            metrics:
+              - metricId: database-spans-rate
+                order: 100
+              - metricId: database-spans-error-rate
+                order: 90
+              - metricId: database-spans-duration
+                order: 80
+      summary:
+        metrics:
+          -
+            summaryMetricId: database-spans-rate
+            name: Span rate
+            order: 100
+            decimalPlaces: 2
+            unit: cps
+            query: |-
+              sum by (client_service_namespace, client, server)(rate(traces_service_graph_request_total{
+                client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+              }[5m]))
+            metricId: database-spans-rate
+          -
+            summaryMetricId: database-spans-error-rate
+            name: Span error %
+            order: 90
+            decimalPlaces: 2
+            unit: percentunit
+            query: |-
+              sum by(client_service_namespace, client, server) (rate(traces_service_graph_request_failed_total{
+                client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+              }[5m]) or 0) / sum by (client_service_namespace, client, server)(rate(traces_service_graph_request_total{
+                client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+              }[5m]))
+            metricId: database-spans-error-rate
+          -
+            summaryMetricId: database-spans-duration
+            name: Span duration
+            order: 80
+            decimalPlaces: 2
+            unit: s
+            query: |-
+              histogram_quantile(0.95, sum(rate(traces_service_graph_request_client_seconds_bucket{
+                client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
+              }[${__rate_interval}])) by (client_service_namespace, client, server, le))
+            metricId: database-spans-duration
+      metricPerspective:
+        tabs:
+          -
+            tabId: traces-performance
+            title: Traces Performance
+            order: 10
+            sections:
+              -
+                sectionId: spans
+                title: Spans
+                order: 10
+                metrics:
+                  - metricId: database-spans-error-rate
+                  - metricId: database-spans-duration
+                  - metricId: database-spans-rate
+    metrics:
+      -
+        metricId: database-spans-error-rate
+        description: The percentage of errors per second
+        name: Span error %
+        metricQueries:
+          - expression: |-
+              sum(rate(traces_service_graph_request_failed_total{client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"}[5m]) or 0)
+              / sum(rate(traces_service_graph_request_total{client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"}[5m]))
+            alias: Error rate
+        chart:
+          _type: TimeSeriesChart
+          unit: percentunit
+      -
+        metricId: database-spans-duration
+        description:
+        name: Span duration
+        metricQueries:
+          - expression: histogram_quantile(0.95, sum(rate(traces_service_graph_request_client_seconds_bucket{client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"}[${__rate_interval}])) by (le))
+            alias: '95th percentile'
+        chart:
+          _type: TimeSeriesChart
+          unit: s
+      -
+        metricId: database-spans-rate
+        description: The number of spans for the database per second
+        name: Span rate
+        metricQueries:
+          - expression: sum(rate(traces_service_graph_request_total{client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"}[${__rate_interval}]))
+            alias: Query rate
+        chart:
+          _type: TimeSeriesChart
+          unit: cps

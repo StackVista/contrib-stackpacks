@@ -1,0 +1,40 @@
+nodes:
+  - _type: "OtelComponentMapping"
+    name: "Kubernetes Namespace"
+    description: "Represents a logical service namespace in Kubernetes"
+    identifier: "urn:stackpack:open-telemetry-2:otel-component-mapping:namespace"
+    input:
+      signal:
+        - "TRACES"
+        - "METRICS"
+      resource:
+        action: "'CREATE'"
+        condition: "'service.namespace' in resource.attributes"
+    vars:
+      - name: "namespace"
+        value: "resource.attributes['service.namespace']"
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+      - name: "k8sNamespaceName"
+        value: "resource.attributes['k8s.namespace.name']"
+    output:
+      identifier: "'urn:opentelemetry:namespace/' + vars.namespace"
+      name: "vars.namespace"
+      typeName: "'service namespace (otel)'"
+      required:
+        tags:
+          - source: "'open-telemetry'"
+            target: "stackpack"
+          - source: "vars.clusterName"
+            target: "cluster-name"
+          - source: "vars.k8sNamespaceName"
+            target: "namespace"
+          - source: "vars.clusterName + '/' + vars.k8sNamespaceName"
+            target: "k8s-scope"
+      optional:
+        tags:
+          - source: "resource.attributes['deployment.environment']"
+            target: "deployment-environment"
+    expireAfter: 900000
+    rank:
+      specificity: 100

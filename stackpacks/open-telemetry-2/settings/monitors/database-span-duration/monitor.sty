@@ -1,0 +1,21 @@
+nodes:
+  - _type: Monitor
+    arguments:
+      comparator: GT
+      failureState: DEVIATING
+      metric:
+        query: 'histogram_quantile(0.95, sum by(client_service_namespace, client, server, le)(rate(traces_service_graph_request_client_seconds_bucket{connection_type="database"}[5m])))'
+        aliasTemplate: Span duration 95th percentile
+        unit: s
+      threshold: 5
+      titleTemplate: Span duration
+      urnTemplate: "urn:opentelemetry:namespace/${client_service_namespace}:service/${client}:database/${server}"
+    description: |
+      Monitors the duration of database spans. When the 95th percentile of the duration is greater than the threshold (default 5s) the monitor has a Deviating state.
+    function: urn:stackpack:common:monitor-function:threshold
+    identifier: urn:stackpack:open-telemetry-2:monitor:database-span-duration
+    intervalSeconds: 30
+    name: Span duration for Open Telemetry database
+    status: ENABLED
+    tags: ["database", "traces"]
+    remediationHint: !include remediation-hints/database-span-duration.md.hbs

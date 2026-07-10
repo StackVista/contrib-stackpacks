@@ -1,0 +1,69 @@
+nodes:
+  - _type: "OtelComponentMapping"
+    name: "OTel Service Instance"
+    description: "Represents an instance of an OTel service"
+    identifier: "urn:stackpack:open-telemetry-2:otel-component-mapping:service-instance"
+    input:
+      signal:
+        - "TRACES"
+        - "METRICS"
+      resource:
+        action: "'CREATE'"
+        condition: "'service.namespace' in resource.attributes"
+    vars:
+      - name: "namespace"
+        value: >-
+          'service.namespace' in resource.attributes ?
+          resource.attributes['service.namespace'] :
+          'default'
+      - name: "service"
+        value: "resource.attributes['service.name']"
+      - name: "version"
+        value: >-
+          'service.version' in resource.attributes ?
+          resource.attributes['service.version'] :
+          'undefined'
+      - name: "instanceId"
+        value: >-
+          'service.instance.id' in resource.attributes ?
+          resource.attributes['service.instance.id'] :
+          resource.attributes['service.name']
+      - name: "instanceName"
+        value: >-
+          'service.instance.id' in resource.attributes ?
+          resource.attributes['service.name'] + " - " + resource.attributes['service.instance.id'] :
+          resource.attributes['service.name'] + " - instance"
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+      - name: "k8sNamespaceName"
+        value: "resource.attributes['k8s.namespace.name']"
+    output:
+      identifier: >-
+        'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service + ':serviceInstance/' + vars.instanceId
+      name: "vars.instanceName"
+      typeName: "'otel service instance'"
+      required:
+        version: "vars.version"
+        tags:
+          - source: "'open-telemetry'"
+            target: "stackpack"
+          - source: "vars.service"
+            target: "service.name"
+          - source: "vars.namespace"
+            target: "service.namespace"
+          - source: "vars.clusterName"
+            target: "cluster-name"
+          - source: "vars.k8sNamespaceName"
+            target: "namespace"
+          - source: "vars.clusterName + '/' + vars.k8sNamespaceName"
+            target: "k8s-scope"
+          - source: "resource.attributes"
+            pattern: "(.*)"
+            target: "${1}"
+      optional:
+        tags:
+          - source: "resource.attributes['deployment.environment']"
+            target: "deployment-environment"
+    expireAfter: 900000
+    rank:
+      specificity: 210

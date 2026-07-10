@@ -1,0 +1,11 @@
+Notification Details:
+  - cluster: {{ labels.cluster_name }}
+  - notification: {{ labels.notification_name }}
+  - notification CR name: {{ labels.name }}
+  - notification CR namespace: {{ labels.namespace }}
+
+The possible causes for this issue are:
+- Incorrect configuration of the Notifications.
+- Issues with SUSE Observability instance.
+
+1. Inspect the [Logs](/#/components/{{ componentUrnForUrl }}#logs) for the error messages.
