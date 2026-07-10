@@ -174,8 +174,8 @@ jobs:
     needs: [package]
     if: |
       always() && (
-        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.organization == 'StackVista')
-        || (github.event_name =='push' && github.event.push.repository == 'StackVista/contrib-stackpacks')
+        (github.event_name == 'pull_request' && github.event.pull_request.head.repo.owner.login == 'StackVista')
+        || (github.event_name =='push' && github.event.push.repository.owner.login == 'StackVista')
       ) && (needs.package.result == 'success' || needs.package.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
