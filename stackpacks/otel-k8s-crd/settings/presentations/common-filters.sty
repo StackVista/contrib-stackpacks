@@ -34,6 +34,14 @@ nodes:
             _type: "TagFilter"
             tagKey: "k8s.crd.kind"
           moreTab: "Custom Resources"
+        - filterId: "crd_custom_resources_watched"
+          displayName:
+            singular: "CRs collected"
+            plural: "CRs collected"
+          filter:
+            _type: "TagFilter"
+            tagKey: "k8s.crd.custom_resources_watched"
+          moreTab: "Custom Resources"
         - filterId: "cr_api_group"
           displayName:
             singular: "API Group"

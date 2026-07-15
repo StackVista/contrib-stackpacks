@@ -29,14 +29,9 @@ nodes:
           plural: "custom resources"
           title: "Custom Resources"
         mainMenu:
-          group: "Custom Resources"
-          order: 1
+          group: "Kubernetes"
+          order: 0
         columns:
-          - columnId: health
-            title: "Health"
-            projection:
-              _type: "HealthProjection"
-              value: "healthState"
           - columnId: cr_name
             title: "Name"
             projection:
@@ -114,7 +109,7 @@ nodes:
             projection:
               _type: "TagProjection"
         provisioning:
-          externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:otel-k8s-crd:otel-component-mapping:custom-resource'"
+          topologySourceSelector: "source.identifier == identifiers[0]"
           showConfiguration: true
           showStatus: true
         relatedResources:

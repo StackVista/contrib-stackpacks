@@ -20,13 +20,14 @@ nodes:
         value: "log.attributes['k8s.resource.group']"
       - name: "kind"
         value: "log.attributes['k8s.resource.kind']"
+      - name: "customResourcesWatched"
+        value: "'k8s.crd.custom_resources_watched' in log.attributes && log.attributes['k8s.crd.custom_resources_watched'] ? 'Yes' : 'No'"
     output:
       identifier: "'urn:k8s:crd:/cluster/' + vars.clusterName + ':group/' + vars.group + ':kind/' + vars.kind"
       name: "vars.name"
       typeName: "'custom resource definition'"
       required:
-        configuration: "omit(log.body['object'], ['status', 'metadata'])"
-        status: "log.body['object']['status']"
+        configuration: "log.body['object']['spec']"
         tags:
           - source: "'otel-k8s-crd'"
             target: "stackpack"
@@ -36,7 +37,10 @@ nodes:
             target: "k8s.crd.kind"
           - source: "vars.clusterName"
             target: "cluster-name"
+          - source: "vars.customResourcesWatched"
+            target: "k8s.crd.custom_resources_watched"
       optional:
+        status: "log.body['object']['status']"
         tags:
           - source: "log.body['object']['metadata']['creationTimestamp']"
             target: "k8s.creationTimestamp"
