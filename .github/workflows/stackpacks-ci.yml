@@ -33,7 +33,7 @@ jobs:
       fail-fast: false
       matrix:
         stackpack:
-          - open-telemetry-2
+          - open-telemetry
           - otel-k8s-crd
           - notification-operator
           - suse-observability-2
@@ -67,7 +67,7 @@ jobs:
       fail-fast: false
       matrix:
         stackpack:
-          - open-telemetry-2
+          - open-telemetry
           - otel-k8s-crd
           - notification-operator
           - suse-observability-2
@@ -140,7 +140,7 @@ jobs:
       fail-fast: false
       matrix:
         stackpack:
-          - open-telemetry-2
+          - open-telemetry
           - otel-k8s-crd
           - notification-operator
           - suse-observability-2
