@@ -1,5 +1,5 @@
 name: suse-observability-2
-version: "0.0.5"
+version: "0.0.6"
 schemaVersion: "2.0"
 displayName: "SUSE Observability 2.0"
 categories: [ "SUSE Observability" ]
