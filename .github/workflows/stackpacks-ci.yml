@@ -33,10 +33,10 @@ jobs:
       fail-fast: false
       matrix:
         stackpack:
-          - open-telemetry-2
+          - open-telemetry
           - otel-k8s-crd
           - notification-operator
-          - suse-observability-2
+          - suse-observability
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -67,10 +67,10 @@ jobs:
       fail-fast: false
       matrix:
         stackpack:
-          - open-telemetry-2
+          - open-telemetry
           - otel-k8s-crd
           - notification-operator
-          - suse-observability-2
+          - suse-observability
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -140,10 +140,10 @@ jobs:
       fail-fast: false
       matrix:
         stackpack:
-          - open-telemetry-2
+          - open-telemetry
           - otel-k8s-crd
           - notification-operator
-          - suse-observability-2
+          - suse-observability
     env:
       TARGET_BRANCH: ${{ github.base_ref || 'main' }}
     steps:
