@@ -56,11 +56,16 @@ nodes:
               _type: MetricProjection
               sparkline: true
               decimalPlaces: 2
-              unit: ms
+              unit: s
+              # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
               query: |-
-                histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{
                   service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"
-                }[${__rate_interval}])) by (service_namespace, service_name, le))
+                }[${__rate_interval}])) by (service_namespace, service_name, le)))
+                or
+                (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                  service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"
+                }[${__rate_interval}])) by (service_namespace, service_name, le)) / 1000)
               metricId: service-spans-duration
           - columnId: otel_service_span_rate_summary
             title: "Span rate"
@@ -149,11 +154,16 @@ nodes:
             name: Span duration
             order: 90
             decimalPlaces: 2
-            unit: ms
+            unit: s
+            # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
             query: |-
-              histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{
                 service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"
-              }[${__rate_interval}])) by (service_namespace, service_name, le))
+              }[${__rate_interval}])) by (service_namespace, service_name, le)))
+              or
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"
+              }[${__rate_interval}])) by (service_namespace, service_name, le)) / 1000)
             metricId: service-spans-duration
           - summaryMetricId: otel_service_span_rate_summary
             name: Span rate
@@ -417,13 +427,20 @@ nodes:
         description:
         name: Span duration
         metricQueries:
-          - expression: histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (span_kind, le))
+          # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
+          - expression: |-
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (span_kind, le)))
+              or
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (span_kind, le)) / 1000)
             alias: '95th percentile ${span_kind}'
-          - expression: histogram_quantile(0.99, sum(rate(otel_span_duration_milliseconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (span_kind, le))
+          - expression: |-
+              (histogram_quantile(0.99, sum(rate(otel_span_duration_seconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (span_kind, le)))
+              or
+              (histogram_quantile(0.99, sum(rate(otel_span_duration_milliseconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (span_kind, le)) / 1000)
             alias: '99th percentile ${span_kind}'
         chart:
           _type: TimeSeriesChart
-          unit: ms
+          unit: s
       -
         metricId: service-spans-rate-per-instance
         description: The number of spans for the otel service per second
@@ -453,12 +470,16 @@ nodes:
         description:
         name: Span duration
         metricQueries:
-          - expression: histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (service_instance_id, service_name, service_namespace, le))
+          # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
+          - expression: |-
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (service_instance_id, service_name, service_namespace, le)))
+              or
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"}[${__rate_interval}])) by (service_instance_id, service_name, service_namespace, le)) / 1000)
             alias: '95th percentile ${service_instance_id}'
             componentIdentifierTemplate: "urn:opentelemetry:namespace/${service_namespace}:service/${service_name}:serviceInstance/${service_instance_id}"
         chart:
           _type: TimeSeriesChart
-          unit: ms
+          unit: s
       -
         metricId: service-instance-count
         description:
