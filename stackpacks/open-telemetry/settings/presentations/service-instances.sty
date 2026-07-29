@@ -63,11 +63,16 @@ nodes:
               _type: MetricProjection
               sparkline: true
               decimalPlaces: 2
-              unit: ms
+              unit: s
+              # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
               query: |-
-                histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{
                   service_namespace="${tags.singleValue('service.namespace')}", service_name="${tags.singleValue('service.name')}", service_instance_id="${tags.singleValue('service.instance.id')}"
-                }[${__rate_interval}])) by (service_namespace, service_name, service_instance_id, le))
+                }[${__rate_interval}])) by (service_namespace, service_name, service_instance_id, le)))
+                or
+                (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                  service_namespace="${tags.singleValue('service.namespace')}", service_name="${tags.singleValue('service.name')}", service_instance_id="${tags.singleValue('service.instance.id')}"
+                }[${__rate_interval}])) by (service_namespace, service_name, service_instance_id, le)) / 1000)
               metricId: service-instance-spans-duration
           - columnId: otel_service_instance_span_rate_summary
             title: Span rate
@@ -162,11 +167,16 @@ nodes:
             name: Span duration
             description:
             order: 80
-            unit: ms
+            unit: s
+            # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
             query: |-
-              histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{
                 service_namespace="${tags.singleValue('service.namespace')}", service_name="${tags.singleValue('service.name')}", service_instance_id="${tags.singleValue('service.instance.id')}"
-              }[${__rate_interval}])) by (le))
+              }[${__rate_interval}])) by (le)))
+              or
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                service_namespace="${tags.singleValue('service.namespace')}", service_name="${tags.singleValue('service.name')}", service_instance_id="${tags.singleValue('service.instance.id')}"
+              }[${__rate_interval}])) by (le)) / 1000)
             metricId: service-instance-spans-duration
 
       metricPerspective:
@@ -374,11 +384,16 @@ nodes:
         description:
         name: Span duration
         metricQueries:
+          # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
           - expression: |-
-              histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_seconds_bucket{
                   service_namespace="${tags.singleValue('service.namespace')}", service_name="${tags.singleValue('service.name')}", service_instance_id="${tags.singleValue('service.instance.id')}"
-                }[${__rate_interval}])) by (k8s_cluster_name, k8s_namespace_name, k8s_pod_name, span_kind, le))
+                }[${__rate_interval}])) by (k8s_cluster_name, k8s_namespace_name, k8s_pod_name, span_kind, le)))
+              or
+              (histogram_quantile(0.95, sum(rate(otel_span_duration_milliseconds_bucket{
+                  service_namespace="${tags.singleValue('service.namespace')}", service_name="${tags.singleValue('service.name')}", service_instance_id="${tags.singleValue('service.instance.id')}"
+                }[${__rate_interval}])) by (k8s_cluster_name, k8s_namespace_name, k8s_pod_name, span_kind, le)) / 1000)
             alias: '95th percentile ${span_kind}'
         chart:
           _type: TimeSeriesChart
-          unit: ms
+          unit: s
