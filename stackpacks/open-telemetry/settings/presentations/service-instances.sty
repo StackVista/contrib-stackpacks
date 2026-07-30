@@ -107,6 +107,12 @@ nodes:
               _type: ComponentLinkProjection
               name: "tags.singleValue('service.name')"
               identifier: "'urn:opentelemetry:namespace/' + tags.singleValue('service.namespace') + ':service/' + tags.singleValue('service.name')"
+          - fieldId: "language"
+            title: "Language"
+            order: 80.0
+            projection:
+              _type: TextProjection
+              value: "tags.singleValue('telemetry.sdk.language')"
         provisioning:
           externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:service-instance'"
           showConfiguration: false
