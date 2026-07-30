@@ -15,5 +15,5 @@ nodes:
             title: "Related service instances"
             order: 1.0
             topologyQuery: >-
-              type = "otel service instance" AND label = "cluster-name:${tags.singleValue('cluster-name')}" AND label = "namespace:${tags.singleValue('namespace')}"
+              type = "otel service instance" AND label = "k8s.pod.name:${name}"
             presentationIdentifier: "urn:stackpack:open-telemetry:component-presentation:service-instance"
