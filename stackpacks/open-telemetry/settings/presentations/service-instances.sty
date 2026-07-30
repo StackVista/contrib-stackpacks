@@ -155,6 +155,12 @@ nodes:
             order: 1.0
             topologyQuery: '(withNeighborsOf(direction = "up", components = (withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1") and type = "otel service instance") , levels = "1") and type = "otel service")'
             presentationIdentifier: "urn:stackpack:open-telemetry:component-presentation:service"
+          - resourceId: "otel_service_instance_pods"
+            title: "Related pods"
+            order: 3.0
+            topologyQuery: >-
+              type = "pod" AND label = "cluster-name:${tags.singleValue('cluster-name')}" AND label = "namespace:${tags.singleValue('namespace')}"
+            presentationIdentifier: "urn:stackpack:open-telemetry:view-type:pod-link"
         events:
           showEvents: true
           relatedResourcesQuery: |
