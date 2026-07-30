@@ -161,6 +161,12 @@ nodes:
             topologyQuery: >-
               type = "pod" AND label = "cluster-name:${tags.singleValue('cluster-name')}" AND label = "namespace:${tags.singleValue('namespace')}"
             presentationIdentifier: "urn:stackpack:open-telemetry:view-type:pod-link"
+          - resourceId: "otel_service_instance_hosts"
+            title: "Related hosts"
+            order: 4.0
+            topologyQuery: >-
+              label = "source-type:host" AND label = "source-name:${tags.singleValue('k8s.node.name')}"
+            presentationIdentifier: "urn:stackpack:open-telemetry:view-type:host-link"
         events:
           showEvents: true
           relatedResourcesQuery: |
