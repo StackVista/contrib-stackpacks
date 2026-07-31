@@ -224,6 +224,13 @@ nodes:
               }[${__rate_interval}])) by (le)) / 1000)
             metricId: service-instance-spans-duration
 
+      tracesPerspective:
+        showTraces: true
+        spanFilter:
+          attributes:
+            service.namespace: ["${tags.singleValue('service.namespace')}"]
+            service.name: ["${tags.singleValue('service.name')}"]
+            service.instance.id: ["${tags.singleValue('service.instance.id')}"]
       metricPerspective:
         tabs:
           -

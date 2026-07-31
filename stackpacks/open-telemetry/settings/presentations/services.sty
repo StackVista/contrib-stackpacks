@@ -213,6 +213,12 @@ nodes:
                 service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"
               }[${__rate_interval}]))
             metricId: service-spans-rate
+      tracesPerspective:
+        showTraces: true
+        spanFilter:
+          attributes:
+            service.namespace: ["${tags.singleValue('service.namespace')}"]
+            service.name: ["${name}"]
       metricPerspective:
         tabs:
           -
