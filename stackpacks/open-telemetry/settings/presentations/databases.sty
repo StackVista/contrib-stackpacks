@@ -77,7 +77,25 @@ nodes:
           - columnId: otel_name
       highlight:
         title: "Otel database"
-        fields: []
+        fields:
+          - fieldId: otel_db_system
+            title: "Database type"
+            order: 1
+            projection:
+              _type: TextProjection
+              value: "tags.singleValue('db.system')"
+          - fieldId: otel_db_server_address
+            title: "Server address"
+            order: 2
+            projection:
+              _type: TextProjection
+              value: "'server.address' in tags ? tags.singleValue('server.address') : 'net.peer.name' in tags ? tags.singleValue('net.peer.name') : ''"
+          - fieldId: otel_db_server_port
+            title: "Server port"
+            order: 3
+            projection:
+              _type: TextProjection
+              value: "'server.port' in tags ? tags.singleValue('server.port') : 'net.peer.port' in tags ? tags.singleValue('net.peer.port') : ''"
         provisioning:
           externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:database'"
           showConfiguration: false
@@ -88,7 +106,7 @@ nodes:
             order: 2.0
             topologyQuery: '(withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1")) and type = "otel service instance"'
             presentationIdentifier: "urn:stackpack:open-telemetry:component-presentation:service-instance"
-          - resourceId: "otel_datbase_services"
+          - resourceId: "otel_database_services"
             title: "Related services"
             order: 1.0
             topologyQuery: '(withNeighborsOf(direction = "up", components = (withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1") and type = "otel service instance") , levels = "1") and type = "otel service")'
