@@ -41,3 +41,41 @@ nodes:
       typeName: "'database'"
       dependencyType: "'CONNECTION'"
     expireAfter: 900000
+  - _type: "OtelRelationMapping"
+    name: "Database Relation (span enrichment)"
+    description: "Adds the service instance -> database connection from database spans, complementing the service-graph metrics relation"
+    identifier: "urn:stackpack:open-telemetry:otel-relation-mapping:database-span-enrichment"
+    input:
+      signal:
+        - "TRACES"
+      resource:
+        condition: >-
+          'service.namespace' in resource.attributes &&
+          'service.name' in resource.attributes &&
+          'service.instance.id' in resource.attributes
+        scope:
+          span:
+            action: "'CREATE'"
+            condition: >-
+                'db.system.name' in span.attributes || 'db.system' in span.attributes
+    vars:
+      - name: "clientServiceNamespace"
+        value: "resource.attributes['service.namespace']"
+      - name: "client"
+        value: "resource.attributes['service.name']"
+      - name: "clientServiceInstanceId"
+        value: "resource.attributes['service.instance.id']"
+      - name: "server"
+        value: >-
+            'peer.service' in span.attributes ? span.attributes['peer.service'] :
+            'db.name' in span.attributes ? span.attributes['db.name'] :
+            'db.system.name' in span.attributes ? span.attributes['db.system.name'] :
+            span.attributes['db.system']
+    output:
+      sourceId: >-
+        'urn:opentelemetry:namespace/' + vars.clientServiceNamespace + ':service/' + vars.client + ':serviceInstance/' + vars.clientServiceInstanceId
+      targetId: >-
+        'urn:opentelemetry:namespace/' + vars.clientServiceNamespace + ':service/' + vars.client + ':database/' + vars.server
+      typeName: "'database'"
+      dependencyType: "'CONNECTION'"
+    expireAfter: 900000
