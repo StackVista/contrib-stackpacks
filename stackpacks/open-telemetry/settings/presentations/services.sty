@@ -36,18 +36,18 @@ nodes:
             title: Service
           - columnId: otel_namespace
             title: "OTel Namespace"
-          - columnId: otel_k8s_namespace
-            title: "Kubernetes Namespace"
-            projection:
-              _type: ComponentLinkProjection
-              name: "tags.singleValue('namespace')"
-              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
           - columnId: otel_k8s_cluster
             title: "Kubernetes Cluster"
             projection:
               _type: ComponentLinkProjection
               name: "tags.singleValue('cluster-name')"
               identifier: "'urn:cluster:/kubernetes:' + tags.singleValue('cluster-name')"
+          - columnId: otel_k8s_namespace
+            title: "Kubernetes Namespace"
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('namespace')"
+              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
           - columnId: otel_service_span_error_percent_summary
             title: Span error %
             projection:
@@ -112,13 +112,6 @@ nodes:
             projection:
               _type: TextProjection
               value: "tags.singleValue('telemetry.sdk.language')"
-          - fieldId: "k8s_namespace"
-            title: "K8s Namespace"
-            order: 80.0
-            projection:
-              _type: ComponentLinkProjection
-              name: "tags.singleValue('namespace')"
-              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
           - fieldId: "k8s_cluster"
             title: "K8s Cluster"
             order: 77.5
@@ -126,6 +119,13 @@ nodes:
               _type: ComponentLinkProjection
               name: "tags.singleValue('cluster-name')"
               identifier: "'urn:cluster:/kubernetes:' + tags.singleValue('cluster-name')"
+          - fieldId: "k8s_namespace"
+            title: "K8s Namespace"
+            order: 75.0
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('namespace')"
+              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
         provisioning:
           externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:service'"
           showConfiguration: false

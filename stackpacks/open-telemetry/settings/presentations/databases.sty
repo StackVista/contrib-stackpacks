@@ -160,6 +160,13 @@ nodes:
                 client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
               }[${__rate_interval}])) by (client_service_namespace, client, server, le))
             metricId: database-spans-duration
+      tracesPerspective:
+        showTraces: true
+        spanFilter:
+          attributes:
+            service.namespace: ["${tags.singleValue('service.namespace')}"]
+            service.name: ["${tags.singleValue('service.name')}"]
+            db.system: ["${tags.singleValue('db.system')}"]
       metricPerspective:
         tabs:
           -
