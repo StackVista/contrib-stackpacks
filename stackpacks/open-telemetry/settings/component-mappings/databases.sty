@@ -44,7 +44,7 @@ nodes:
       specificity: 200
   - _type: "OtelComponentMapping"
     name: "Database (span enrichment DB system)"
-    description: "Enriches database components with db.system and connection details from spans"
+    description: "Enriches database components with db.system.name and connection details from spans"
     identifier: "urn:stackpack:open-telemetry:otel-component-mapping:database-span-enrichment-db-system"
     input:
       signal:
@@ -54,16 +54,20 @@ nodes:
         scope:
           span:
             action: "'CREATE'"
-            condition: "'db.system' in span.attributes"
+            condition: >-
+                'db.system.name' in span.attributes || 'db.system' in span.attributes
     vars:
       - name: "clientServiceNamespace"
         value: "resource.attributes['service.namespace']"
       - name: "client"
         value: "resource.attributes['service.name']"
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
       - name: "server"
         value: >-
             'peer.service' in span.attributes ? span.attributes['peer.service'] :
             'db.name' in span.attributes ? span.attributes['db.name'] :
+            'db.system.name' in span.attributes ? span.attributes['db.system.name'] :
             span.attributes['db.system']
     output:
       identifier: >-
@@ -77,12 +81,18 @@ nodes:
         tags:
           - source: "'open-telemetry'"
             target: "stackpack"
+          - source: "vars.clusterName"
+            target: "cluster-name"
           - source: "resource.attributes"
             pattern: "(.*)"
             target: "${1}"
           - source: "span.attributes"
             pattern: "db.(.*)"
             target: "db.${1}"
+      optional:
+        tags:
+          - source: "resource.attributes['k8s.namespace.name']"
+            target: "namespace"
     expireAfter: 900000
     rank:
       specificity: 190
