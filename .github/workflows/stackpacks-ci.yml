@@ -35,7 +35,6 @@ jobs:
         stackpack:
           - open-telemetry
           - otel-k8s-crd
-          - notification-operator
           - suse-observability
     steps:
       - name: Check out repository
@@ -69,7 +68,6 @@ jobs:
         stackpack:
           - open-telemetry
           - otel-k8s-crd
-          - notification-operator
           - suse-observability
     steps:
       - name: Check out repository
@@ -142,7 +140,6 @@ jobs:
         stackpack:
           - open-telemetry
           - otel-k8s-crd
-          - notification-operator
           - suse-observability
     env:
       TARGET_BRANCH: ${{ github.base_ref || 'main' }}
