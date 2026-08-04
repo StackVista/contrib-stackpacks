@@ -66,13 +66,25 @@ nodes:
       - name: "server"
         value: >-
             'peer.service' in span.attributes ? span.attributes['peer.service'] :
+            'db.namespace' in span.attributes ? span.attributes['db.namespace'] :
             'db.name' in span.attributes ? span.attributes['db.name'] :
+            'db.system.name' in span.attributes ? span.attributes['db.system.name'] :
+            span.attributes['db.system']
+      # Logical database name for display. Prefers the specific database name (db.namespace is the current
+      # attribute, db.name the deprecated legacy one), then the user-assigned peer service label, falling
+      # back to the generic DBMS product type only so the component is never nameless. Kept separate from
+      # `server` (identity), which leads with peer.service.
+      - name: "databaseName"
+        value: >-
+            'db.namespace' in span.attributes ? span.attributes['db.namespace'] :
+            'db.name' in span.attributes ? span.attributes['db.name'] :
+            'peer.service' in span.attributes ? span.attributes['peer.service'] :
             'db.system.name' in span.attributes ? span.attributes['db.system.name'] :
             span.attributes['db.system']
     output:
       identifier: >-
         'urn:opentelemetry:namespace/' + vars.clientServiceNamespace + ':service/' + vars.client + ':database/span/' + vars.server
-      name: "vars.server"
+      name: "vars.databaseName"
       typeName: "'database'"
       required:
         additionalIdentifiers:

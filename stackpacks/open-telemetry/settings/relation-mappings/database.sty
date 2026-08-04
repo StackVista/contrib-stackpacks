@@ -68,6 +68,7 @@ nodes:
       - name: "server"
         value: >-
             'peer.service' in span.attributes ? span.attributes['peer.service'] :
+            'db.namespace' in span.attributes ? span.attributes['db.namespace'] :
             'db.name' in span.attributes ? span.attributes['db.name'] :
             'db.system.name' in span.attributes ? span.attributes['db.system.name'] :
             span.attributes['db.system']
