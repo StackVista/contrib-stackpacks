@@ -8,7 +8,7 @@ When installing or upgrading the SUSE Observability Agent with Helm, enable Open
 --set otel=true
 ```
 
-You can also control Rancher enrichment for Open Telemetry logs:
+On Rancher-managed clusters, set:
 
 ```bash
 --set otel.integrations.rancherAgent=true
