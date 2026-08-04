@@ -103,13 +103,13 @@ nodes:
             order: 84.0
             projection:
               _type: TextProjection
-              value: "'net.peer.name' in tags ? tags.singleValue('net.peer.name') : tags.singleValue('server.address')"
+              value: "'server.address' in tags ? tags.singleValue('server.address') : tags.singleValue('net.peer.name')"
           - fieldId: otel_db_server_port
             title: "Server port"
             order: 83.0
             projection:
               _type: TextProjection
-              value: "'net.peer.port' in tags ? tags.singleValue('net.peer.port') : tags.singleValue('server.port')"
+              value: "'server.port' in tags ? tags.singleValue('server.port') : tags.singleValue('net.peer.port')"
           - fieldId: "k8s_cluster"
             title: "K8s Cluster"
             order: 77.5

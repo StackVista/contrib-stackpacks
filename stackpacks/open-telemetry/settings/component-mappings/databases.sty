@@ -99,8 +99,8 @@ nodes:
             pattern: "(.*)"
             target: "${1}"
           - source: "span.attributes"
-            pattern: "db.(.*)"
-            target: "db.${1}"
+            pattern: (.*)"
+            target: "${1}"
       optional:
         tags:
           - source: "resource.attributes['k8s.namespace.name']"
