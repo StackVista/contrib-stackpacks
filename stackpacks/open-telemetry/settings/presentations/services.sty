@@ -35,6 +35,19 @@ nodes:
           - columnId: otel_name
             title: Service
           - columnId: otel_namespace
+            title: "OTel Namespace"
+          - columnId: otel_k8s_cluster
+            title: "Kubernetes Cluster"
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('cluster-name')"
+              identifier: "'urn:cluster:/kubernetes:' + tags.singleValue('cluster-name')"
+          - columnId: otel_k8s_namespace
+            title: "Kubernetes Namespace"
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('namespace')"
+              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
           - columnId: otel_service_span_error_percent_summary
             title: Span error %
             projection:
@@ -84,15 +97,35 @@ nodes:
           - columnId: health
           - columnId: otel_name
       highlight:
-        title: "Otel service"
+        title: "OTel service"
         fields:
           - fieldId: "namespace"
-            title: "Otel Namespace"
+            title: "OTel Namespace"
             order: 85.0
             projection:
               _type: ComponentLinkProjection
               name: tags.singleValue('service.namespace')
               identifier: "'urn:opentelemetry:namespace/' + tags.singleValue('service.namespace')"
+          - fieldId: "language"
+            title: "Language"
+            order: 82.5
+            projection:
+              _type: TextProjection
+              value: "tags.singleValue('telemetry.sdk.language')"
+          - fieldId: "k8s_cluster"
+            title: "K8s Cluster"
+            order: 77.5
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('cluster-name')"
+              identifier: "'urn:cluster:/kubernetes:' + tags.singleValue('cluster-name')"
+          - fieldId: "k8s_namespace"
+            title: "K8s Namespace"
+            order: 75.0
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('namespace')"
+              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
         provisioning:
           externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:service'"
           showConfiguration: false
@@ -108,6 +141,11 @@ nodes:
             order: 1.0
             topologyQuery: '(withNeighborsOf(direction = "up", components = (withNeighborsOf(direction = "both", components = (withNeighborsOf(direction = "down", components = (identifier = "${identifiers[0]}"), levels = "1") and type = "otel service instance"), levels = "1") and type = "otel service instance") , levels = "1") and type = "otel service")'
             presentationIdentifier: "urn:stackpack:open-telemetry:component-presentation:service"
+          - resourceId: "otel_service_pods"
+            title: "Related pods"
+            order: 3.0
+            topologyQuery: '(withNeighborsOf(direction = "both", components = (withNeighborsOf(direction = "down", components = (identifier = "${identifiers[0]}"), levels = "1") and type = "otel service instance"), levels = "1")) and type = "pod"'
+            presentationIdentifier: "urn:stackpack:open-telemetry:view-type:pod-link"
         events:
           showEvents: true
           relatedResourcesQuery: |
@@ -175,6 +213,12 @@ nodes:
                 service_namespace="${tags.singleValue('service.namespace')}", service_name="${name}"
               }[${__rate_interval}]))
             metricId: service-spans-rate
+      tracesPerspective:
+        showTraces: true
+        spanFilter:
+          attributes:
+            service.namespace: ["${tags.singleValue('service.namespace')}"]
+            service.name: ["${name}"]
       metricPerspective:
         tabs:
           -

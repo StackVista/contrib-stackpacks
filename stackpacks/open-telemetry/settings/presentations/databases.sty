@@ -12,7 +12,8 @@ nodes:
       icon: !icon databases.svg
       filters:
         - filterId: "otel_namespace"
-        - filterId: "otel_service"
+        - filterId: "k8s_cluster"
+        - filterId: "k8s_namespace"
       topology:
         groupingEnabled: true
         showIndirectRelations: false
@@ -34,6 +35,19 @@ nodes:
           - columnId: "otel_name"
             title: "Database"
           - columnId: otel_namespace
+            title: "OTel Namespace"
+          - columnId: otel_k8s_cluster
+            title: "Kubernetes Cluster"
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('cluster-name')"
+              identifier: "'urn:cluster:/kubernetes:' + tags.singleValue('cluster-name')"
+          - columnId: otel_k8s_namespace
+            title: "Kubernetes Namespace"
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('namespace')"
+              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
           - columnId: otel_database_span_error_rate
             title: Span error %
             projection:
@@ -77,7 +91,39 @@ nodes:
           - columnId: otel_name
       highlight:
         title: "Otel database"
-        fields: []
+        fields:
+          - fieldId: otel_db_system
+            title: "Database type"
+            order: 85.0
+            projection:
+              _type: TextProjection
+              value: "'db.system.name' in tags ? tags.singleValue('db.system.name') : tags.singleValue('db.system')"
+          - fieldId: otel_db_server_address
+            title: "Server address"
+            order: 84.0
+            projection:
+              _type: TextProjection
+              value: "'net.peer.name' in tags ? tags.singleValue('net.peer.name') : tags.singleValue('server.address')"
+          - fieldId: otel_db_server_port
+            title: "Server port"
+            order: 83.0
+            projection:
+              _type: TextProjection
+              value: "'net.peer.port' in tags ? tags.singleValue('net.peer.port') : tags.singleValue('server.port')"
+          - fieldId: "k8s_cluster"
+            title: "K8s Cluster"
+            order: 77.5
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('cluster-name')"
+              identifier: "'urn:cluster:/kubernetes:' + tags.singleValue('cluster-name')"
+          - fieldId: "k8s_namespace"
+            title: "K8s Namespace"
+            order: 75.0
+            projection:
+              _type: ComponentLinkProjection
+              name: "tags.singleValue('namespace')"
+              identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
         provisioning:
           externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:database'"
           showConfiguration: false
@@ -88,11 +134,23 @@ nodes:
             order: 2.0
             topologyQuery: '(withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1")) and type = "otel service instance"'
             presentationIdentifier: "urn:stackpack:open-telemetry:component-presentation:service-instance"
-          - resourceId: "otel_datbase_services"
+          - resourceId: "otel_database_services"
             title: "Related services"
             order: 1.0
             topologyQuery: '(withNeighborsOf(direction = "up", components = (withNeighborsOf(direction = "both", components = (identifier = "${identifiers[0]}"), levels = "1") and type = "otel service instance") , levels = "1") and type = "otel service")'
             presentationIdentifier: "urn:stackpack:open-telemetry:component-presentation:service"
+          - resourceId: "otel_database_pods"
+            title: "Related pods"
+            order: 3.0
+            topologyQuery: >-
+              label = "source-name:${tags.singleValue('k8s.pod.name')}"
+            presentationIdentifier: "urn:stackpack:open-telemetry:view-type:pod-link"
+          - resourceId: "otel_database_hosts"
+            title: "Related hosts"
+            order: 4.0
+            topologyQuery: >-
+              label = "source-type:host" AND label = "source-name:${tags.singleValue('k8s.node.name')}"
+            presentationIdentifier: "urn:stackpack:open-telemetry:view-type:host-link"
         metrics:
           - sectionId: traces
             title: "Traces"
@@ -142,6 +200,13 @@ nodes:
                 client_service_namespace="${tags.singleValue('service.namespace')}", client="${tags.singleValue('service.name')}", server="${name}"
               }[${__rate_interval}])) by (client_service_namespace, client, server, le))
             metricId: database-spans-duration
+      tracesPerspective:
+        showTraces: true
+        spanFilter:
+          attributes:
+            service.namespace: ["${tags.singleValue('service.namespace')}"]
+            service.name: ["${tags.singleValue('service.name')}"]
+            db.system: ["${tags.singleValue('db.system')}"]
       metricPerspective:
         tabs:
           -
