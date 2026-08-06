@@ -26,17 +26,49 @@ concurrency:
 
 jobs:
 
+  discover-stackpacks:
+    name: Discover stackpacks
+    runs-on: ubuntu-24.04
+    outputs:
+      matrix: ${{ steps.discover.outputs.matrix }}
+      has_stackpacks: ${{ steps.discover.outputs.has_stackpacks }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Discover stackpack directories
+        id: discover
+        run: |
+          stackpacks=()
+          if [[ -d stackpacks ]]; then
+            for dir in stackpacks/*; do
+              [[ -d "${dir}" && -f "${dir}/stackpack.yaml" ]] || continue
+              stackpacks+=("$(basename "${dir}")")
+            done
+          fi
+
+          if [[ ${#stackpacks[@]} -eq 0 ]]; then
+            echo 'matrix={"stackpack":[]}' >> "$GITHUB_OUTPUT"
+            echo 'has_stackpacks=false' >> "$GITHUB_OUTPUT"
+            echo "No stackpacks discovered"
+            exit 0
+          fi
+
+          matrix=$(printf '%s\n' "${stackpacks[@]}" | jq -R . | jq -cs '{stackpack:.}')
+          echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
+          echo 'has_stackpacks=true' >> "$GITHUB_OUTPUT"
+          echo "Discovered stackpacks: ${stackpacks[*]}"
+
   validate:
+    needs: [discover-stackpacks]
+    if: ${{ needs.discover-stackpacks.outputs.has_stackpacks == 'true' }}
     name: validate (${{ matrix.stackpack }})
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      matrix:
-        stackpack:
-          - open-telemetry
-          - otel-k8s-crd
-          - notification-operator
-          - suse-observability
+      matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -58,19 +90,14 @@ jobs:
 
   package:
     name: package (${{ matrix.stackpack }})
-    needs: [validate]
+    needs: [discover-stackpacks, validate]
     if: |
       always() &&
       needs.validate.result == 'success'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      matrix:
-        stackpack:
-          - open-telemetry
-          - otel-k8s-crd
-          - notification-operator
-          - suse-observability
+      matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -114,7 +141,7 @@ jobs:
             minor=$(echo "${base_version}" | cut -d. -f2)
             patch=$(echo "${base_version}" | cut -d. -f3)
             new_patch=$((patch + 1))
-            branch_sanitized=$(echo "${BRANCH_NAME}" | sed 's/[^a-zA-Z0-9]/-/g')
+            branch_sanitized=${BRANCH_NAME//[^a-zA-Z0-9]/-}
             short_sha="${SHA:0:7}"
             stackpack_version="${major}.${minor}.${new_patch}-${branch_sanitized}-${RUN_NUMBER}-${short_sha}-SNAPSHOT"
             sed -i "s/^version: .*/version: \"${stackpack_version}\"/" stackpack.yaml
@@ -134,16 +161,13 @@ jobs:
           if-no-files-found: error
 
   check-version-bump:
+    needs: [discover-stackpacks]
+    if: ${{ needs.discover-stackpacks.outputs.has_stackpacks == 'true' }}
     name: Check version bump
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
-      matrix:
-        stackpack:
-          - open-telemetry
-          - otel-k8s-crd
-          - notification-operator
-          - suse-observability
+      matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
     env:
       TARGET_BRANCH: ${{ github.base_ref || 'main' }}
     steps:
@@ -163,7 +187,7 @@ jobs:
 
   build-and-push-docker-image:
     name: Docker image build, scan, and push
-    needs: [package]
+    needs: [discover-stackpacks, package]
     if: |
       always() && (
         (github.event_name == 'pull_request' &&
@@ -172,7 +196,9 @@ jobs:
         || (github.event_name =='push' &&
           github.event.repository.name == 'contrib-stackpacks' &&
           github.event.repository.owner.login == 'StackVista')
-      ) && (needs.package.result == 'success' || needs.package.result == 'skipped')
+      ) &&
+      needs.discover-stackpacks.outputs.has_stackpacks == 'true' &&
+      (needs.package.result == 'success' || needs.package.result == 'skipped')
     runs-on: ubuntu-24.04
     permissions:
       contents: read
@@ -235,11 +261,8 @@ jobs:
         env:
           LOCAL_IMAGE_REF: ${{ steps.local-image.outputs.ref }}
         run: |
-          mkdir -p smoke-output
-          docker run --rm -v "${PWD}/smoke-output:/output" "${LOCAL_IMAGE_REF}" /output
-          copied=$(find smoke-output -type f -name '*.sts' | wc -l | tr -d ' ')
-          if [[ "${copied}" -eq 0 ]]; then
-            echo "Smoke test produced no .sts files" >&2
+          if ! docker run --rm --entrypoint /bin/sh "${LOCAL_IMAGE_REF}" -c 'set -- /stackpacks/*.sts; [ -e "$1" ]'; then
+            echo "Smoke test found no .sts files in /stackpacks" >&2
             exit 1
           fi
 
@@ -312,4 +335,3 @@ jobs:
     secrets:
       HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID }}
       HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY }}
-
