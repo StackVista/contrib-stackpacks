@@ -141,7 +141,7 @@ nodes:
               name: "tags.singleValue('namespace')"
               identifier: "'urn:kubernetes:/' + tags.singleValue('cluster-name') + ':namespace/' + tags.singleValue('namespace')"
         provisioning:
-          externalComponentSelector: "external.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:service-instance'"
+          topologySourceSelector: "source.mapping.identifier == 'urn:stackpack:open-telemetry:otel-component-mapping:service-instance'"
           showConfiguration: false
           showStatus: false
         relatedResources:
