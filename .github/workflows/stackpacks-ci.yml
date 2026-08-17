@@ -183,7 +183,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends yq
 
       - name: Compare versions
-        run: ./scripts/ci/verify_versions_bumped.sh ${{ matrix.stackpack }}
+        env:
+          STACKPACK: ${{ matrix.stackpack }}
+        run: ./scripts/ci/verify_versions_bumped.sh "${STACKPACK}"
 
   build-and-push-docker-image:
     name: Docker image build, scan, and push
@@ -285,7 +287,7 @@ jobs:
           description: Community stackpacks distribution bundle
           component: contrib-stackpacks
           dockerfile: docker/Dockerfile
-          base-name: registry.suse.com/bci/bci-minimal:15.7-26.22
+          base-name: registry.suse.com/bci/bci-minimal:15.7-26.34
 
       - name: Push single-arch image (amd64)
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
