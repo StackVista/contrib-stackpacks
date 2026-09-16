@@ -1,4 +1,4 @@
-FROM registry.suse.com/bci/bci-minimal:15.7-26.49
+FROM registry.suse.com/bci/bci-minimal:15.7-26.58
 
 COPY rootfs/stackpacks /stackpacks
 
