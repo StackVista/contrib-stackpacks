@@ -232,3 +232,97 @@ nodes:
     intervalSeconds: 90
     remediationHint: !include services/victoria-metrics/labels-limit.md.hbs
     status: "ENABLED"
+
+  - _type: "Monitor"
+    name: "VictoriaMetrics - Storage is read only"
+    description: "Monitor that triggers when VictoriaMetrics has stopped accepting writes"
+    tags:
+      - victoria-metrics
+      - suse-observability
+    function: urn:stackpack:common:monitor-function:threshold
+    identifier: urn:stackpack:suse-observability:monitor:victoria-metrics-storage-read-only
+    arguments:
+      metric:
+        query: |-
+          sum(stackstate_vm_storage_is_read_only) by (cluster_name, namespace, pod_name)
+        unit: "short"
+        aliasTemplate: "Storage is read only"
+      comparator: GT
+      threshold: 0
+      failureState: "CRITICAL"
+      urnTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
+      titleTemplate: "Storage is read only"
+    intervalSeconds: 60
+    remediationHint: !include services/victoria-metrics/storage-read-only.md.hbs
+    status: "ENABLED"
+
+  - _type: "Monitor"
+    name: "VictoriaMetrics - Insert concurrency saturated"
+    description: "Monitor that triggers when concurrent inserts reach the limit VictoriaMetrics derives from its CPU allocation"
+    tags:
+      - victoria-metrics
+      - suse-observability
+    function: urn:stackpack:common:monitor-function:threshold
+    identifier: urn:stackpack:suse-observability:monitor:victoria-metrics-insert-concurrency
+    arguments:
+      metric:
+        query: |-
+          sum(avg_over_time(stackstate_vm_concurrent_insert_current[1m])) by (cluster_name, namespace, pod_name)
+          / sum(stackstate_vm_concurrent_insert_capacity) by (cluster_name, namespace, pod_name)
+        unit: "percentunit"
+        aliasTemplate: "Insert concurrency in use"
+      comparator: GTE
+      threshold: 0.9
+      failureState: "DEVIATING"
+      urnTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
+      titleTemplate: "Insert concurrency saturated"
+    intervalSeconds: 90
+    remediationHint: !include services/victoria-metrics/insert-concurrency.md.hbs
+    status: "ENABLED"
+
+  - _type: "Monitor"
+    name: "VictoriaMetrics - Select concurrency saturated"
+    description: "Monitor that triggers when concurrent queries reach the limit VictoriaMetrics derives from its CPU allocation"
+    tags:
+      - victoria-metrics
+      - suse-observability
+    function: urn:stackpack:common:monitor-function:threshold
+    identifier: urn:stackpack:suse-observability:monitor:victoria-metrics-select-concurrency
+    arguments:
+      metric:
+        query: |-
+          sum(avg_over_time(stackstate_vm_concurrent_select_current[1m])) by (cluster_name, namespace, pod_name)
+          / sum(stackstate_vm_concurrent_select_capacity) by (cluster_name, namespace, pod_name)
+        unit: "percentunit"
+        aliasTemplate: "Select concurrency in use"
+      comparator: GTE
+      threshold: 0.9
+      failureState: "DEVIATING"
+      urnTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
+      titleTemplate: "Select concurrency saturated"
+    intervalSeconds: 90
+    remediationHint: !include services/victoria-metrics/select-concurrency.md.hbs
+    status: "ENABLED"
+
+  - _type: "Monitor"
+    name: "VictoriaMetrics - Metrics are not fresh"
+    description: "Monitor that triggers when the newest metric sample is older than the freshness objective"
+    tags:
+      - victoria-metrics
+      - suse-observability
+    function: urn:stackpack:common:monitor-function:threshold
+    identifier: urn:stackpack:suse-observability:monitor:victoria-metrics-freshness
+    arguments:
+      metric:
+        query: |-
+          time() - max(timestamp(stackstate_vm_rows_inserted_total)) by (cluster_name, namespace, pod_name)
+        unit: "s"
+        aliasTemplate: "Age of the newest sample"
+      comparator: GT
+      threshold: 30
+      failureState: "DEVIATING"
+      urnTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
+      titleTemplate: "Metrics are not fresh"
+    intervalSeconds: 60
+    remediationHint: !include services/victoria-metrics/freshness.md.hbs
+    status: "ENABLED"
