@@ -141,3 +141,25 @@ nodes:
             are saturated by more than 90% and vmagent won't be able to keep up with flushing data on disk. 
             In this case, consider to decrease load on the vmagent or improve the disk throughput."
     status: "ENABLED"
+  - _type: "Monitor"
+    name: "Vmagent - Samples dropped on remote write"
+    description: "Monitor that triggers when vmagent discards samples instead of delivering them to the metric store"
+    tags:
+      - vmagent
+      - suse-observability
+    function: urn:stackpack:common:monitor-function:threshold
+    identifier: urn:stackpack:suse-observability:monitor:vmagent-remotewrite-samples-dropped
+    arguments:
+      metric:
+        query: |-
+          sum(increase(stackstate_vmagent_remotewrite_samples_dropped_total[5m])) by (cluster_name, namespace, pod_name)
+        unit: "short"
+        aliasTemplate: "Samples dropped"
+      comparator: GT
+      threshold: 0
+      failureState: "CRITICAL"
+      urnTemplate: "urn:kubernetes:/${cluster_name}:${namespace}:pod/${pod_name}"
+      titleTemplate: "Samples dropped on remote write"
+    intervalSeconds: 90
+    remediationHint: !include services/vmagent/remotewrite-samples-dropped.md.hbs
+    status: "ENABLED"

@@ -1,0 +1,10 @@
+The newest metric sample is older than the freshness objective, so dashboards and monitors are evaluating stale data.
+
+Note this measures the age of arriving traffic, not end-to-end ingest latency. Check in order:
+
+- is anything still being written? `stackstate_vm_rows_inserted_total` should be rising
+- is vmagent holding data back? see the `vmagent - Write queue` panel
+- is the collector queue backing up? see the metrics export queue occupancy panel
+- is the receiver rejecting? see `Receiver - Memory limiter saturation`
+
+A jump here with healthy queues usually means scraping stopped rather than that the path is slow.
