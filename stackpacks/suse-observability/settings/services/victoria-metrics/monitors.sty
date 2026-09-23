@@ -267,8 +267,8 @@ nodes:
     arguments:
       metric:
         query: |-
-          sum(avg_over_time(stackstate_vm_concurrent_insert_current[1m])) by (cluster_name, namespace, pod_name)
-          / sum(stackstate_vm_concurrent_insert_capacity) by (cluster_name, namespace, pod_name)
+          sum(avg_over_time(stackstate_vm_concurrent_insert_current{kube_app_name=~"victoria-metrics-.*"}[1m])) by (cluster_name, namespace, pod_name)
+          / sum(stackstate_vm_concurrent_insert_capacity{kube_app_name=~"victoria-metrics-.*"}) by (cluster_name, namespace, pod_name)
         unit: "percentunit"
         aliasTemplate: "Insert concurrency in use"
       comparator: GTE
@@ -291,8 +291,8 @@ nodes:
     arguments:
       metric:
         query: |-
-          sum(avg_over_time(stackstate_vm_concurrent_select_current[1m])) by (cluster_name, namespace, pod_name)
-          / sum(stackstate_vm_concurrent_select_capacity) by (cluster_name, namespace, pod_name)
+          sum(avg_over_time(stackstate_vm_concurrent_select_current{kube_app_name=~"victoria-metrics-.*"}[1m])) by (cluster_name, namespace, pod_name)
+          / sum(stackstate_vm_concurrent_select_capacity{kube_app_name=~"victoria-metrics-.*"}) by (cluster_name, namespace, pod_name)
         unit: "percentunit"
         aliasTemplate: "Select concurrency in use"
       comparator: GTE
@@ -306,7 +306,7 @@ nodes:
 
   - _type: "Monitor"
     name: "VictoriaMetrics - Metrics are not fresh"
-    description: "Monitor that triggers when the newest metric sample is older than the freshness objective"
+    description: "Monitor that triggers when metrics take longer than the freshness objective to become queryable after they are scraped"
     tags:
       - victoria-metrics
       - suse-observability
@@ -315,9 +315,11 @@ nodes:
     arguments:
       metric:
         query: |-
-          time() - max(timestamp(stackstate_vm_rows_inserted_total)) by (cluster_name, namespace, pod_name)
+          max by (cluster_name, namespace, pod_name) (
+            min_over_time((time() - timestamp(stackstate_vm_rows_inserted_total{type="promremotewrite"}))[1m:5s])
+          )
         unit: "s"
-        aliasTemplate: "Age of the newest sample"
+        aliasTemplate: "Scrape to queryable delay"
       comparator: GT
       threshold: 30
       failureState: "DEVIATING"
