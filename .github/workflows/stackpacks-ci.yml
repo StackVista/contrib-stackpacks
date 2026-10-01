@@ -269,7 +269,7 @@ jobs:
           fi
 
       - name: Scan image
-        uses: StackVista/image-pipeline/.github/actions/scan-image@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        uses: StackVista/image-pipeline/.github/actions/scan-image@4b3ae05b1bf9a4ba1f340ff31d0f9e3531fc92a6
         with:
           image: ${{ steps.local-image.outputs.ref }}
           mode: inform
