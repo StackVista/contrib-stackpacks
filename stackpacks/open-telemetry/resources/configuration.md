@@ -2,22 +2,21 @@
 
 You can click on `Install` to install the Open Telemetry StackPack. Then follow the instructions here and in [the documentation](https://l.stackstate.com/open-telemetry-setup) to finish the Open Telemetry setup.
 
-When installing or upgrading the SUSE Observability Agent with Helm, enable Open Telemetry support with:
+The SUSE Observability Agent's Open Telemetry components are disabled by default. To receive traces and metrics pushed over OTLP from application SDKs, enable the agent's telemetry gateway when installing or upgrading the agent with Helm:
 
-```bash
---set otel=true
-```
-
-On Rancher-managed clusters, set:
-
-```bash
---set otel.integrations.rancherAgent=true
+```yaml
+otel:
+  enabled: true
+  telemetryGateway:
+    enabled: true
 ```
 
 or
 
 ```bash
---set otel.integrations.rancherAgent=false
+--set otel.enabled=true --set otel.telemetryGateway.enabled=true
 ```
 
-Set `otel.integrations.rancherAgent=true` on Rancher-managed clusters to enrich emitted logs with Rancher Manager URL and Harvester cluster ID metadata. Keep it `false` on non-Rancher clusters (default).
+Then point your SDKs at the telemetry gateway service, as described in the [telemetry gateway documentation](https://documentation.suse.com/cloudnative/suse-observability/latest/en/setup/otel/telemetry-gateway.html).
+
+On Rancher-managed clusters, also set `--set otel.integrations.rancherAgent=true` to enrich emitted logs with Rancher Manager URL and Harvester cluster ID metadata. Keep the default, `false`, on non-Rancher clusters.
