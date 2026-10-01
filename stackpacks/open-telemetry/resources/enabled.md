@@ -4,23 +4,15 @@
 
 Instrument one or more applications with Open Telemetry SDKs to generate traces and metrics and install and configure the Open Telemetry collector to send data to SUSE Observability. See the [SUSE Observability Open Telemetry documentation](https://l.stackstate.com/open-telemetry-setup).
 
-If you install or upgrade the SUSE Observability Agent with Helm, make sure Open Telemetry support is enabled:
+To send SDK telemetry through the SUSE Observability Agent, enable its telemetry gateway when installing or upgrading the agent with Helm. The agent's Open Telemetry components are disabled by default:
 
 ```bash
---set otel=true
+--set otel.enabled=true --set otel.telemetryGateway.enabled=true
 ```
 
-On Rancher-managed clusters, set:
+Then point your SDKs at the telemetry gateway service, as described in the [telemetry gateway documentation](https://documentation.suse.com/cloudnative/suse-observability/latest/en/setup/otel/telemetry-gateway.html).
 
-```bash
---set otel.integrations.rancherAgent=true
-```
-
-On non-Rancher clusters, keep the default:
-
-```bash
---set otel.integrations.rancherAgent=false
-```
+On Rancher-managed clusters, also set `--set otel.integrations.rancherAgent=true`. Keep the default, `false`, on non-Rancher clusters.
 
 To send data to SUSE Observability a service token is needed.
 
