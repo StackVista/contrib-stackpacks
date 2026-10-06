@@ -269,7 +269,7 @@ jobs:
           fi
 
       - name: Scan image
-        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3 # fixed-only Grype (#52)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3 # main
         with:
           image: ${{ steps.local-image.outputs.ref }}
           mode: inform
