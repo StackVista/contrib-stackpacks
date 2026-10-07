@@ -269,7 +269,7 @@ jobs:
           fi
 
       - name: Scan image
-        uses: StackVista/image-pipeline/.github/actions/scan-image@f7e766e074b516bb754891a240e6ab2df1e60e4c
+        uses: StackVista/image-pipeline/.github/actions/scan-image@ec325c73909d0d00420121bbde6754b964e80ac3 # main
         with:
           image: ${{ steps.local-image.outputs.ref }}
           mode: inform
@@ -277,7 +277,25 @@ jobs:
           with-grype: true
           upload-sarif: false
 
+      - name: Check whether image needs publication
+        id: publish
+        env:
+          IMAGE_REF: quay.io/stackstate/contrib-stackpacks:${{ steps.tag.outputs.value }}
+        run: |
+          error=$(mktemp)
+          trap 'rm -f "${error}"' EXIT
+          if docker buildx imagetools inspect "${IMAGE_REF}" >/dev/null 2>"${error}"; then
+            echo 'required=false' >> "${GITHUB_OUTPUT}"
+            echo "::notice::Image ${IMAGE_REF} is already published"
+          elif grep -Eq '(^|: )(not found|manifest unknown)(:|$)' "${error}"; then
+            echo 'required=true' >> "${GITHUB_OUTPUT}"
+          else
+            cat "${error}" >&2
+            exit 1
+          fi
+
       - name: Apply OCI labels
+        if: steps.publish.outputs.required == 'true'
         id: oci-labels
         uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
@@ -290,6 +308,7 @@ jobs:
           base-name: registry.suse.com/bci/bci-minimal:15.7-26.60
 
       - name: Push single-arch image (amd64)
+        if: steps.publish.outputs.required == 'true'
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
           image: quay.io/stackstate/contrib-stackpacks
@@ -303,6 +322,7 @@ jobs:
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Push single-arch image (arm64)
+        if: steps.publish.outputs.required == 'true'
         uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
           image: quay.io/stackstate/contrib-stackpacks
@@ -316,6 +336,7 @@ jobs:
           target-registry-password: ${{ secrets.QUAY_PASSWORD }}
 
       - name: Merge multi-arch manifest
+        if: steps.publish.outputs.required == 'true'
         uses: StackVista/image-pipeline/.github/actions/merge-multiarch@f7e766e074b516bb754891a240e6ab2df1e60e4c
         with:
           image: quay.io/stackstate/contrib-stackpacks
