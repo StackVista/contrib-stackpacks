@@ -9,7 +9,9 @@ nodes:
         - "METRICS"
       resource:
         action: "'CREATE'"
-        condition: "'service.name' in resource.attributes"
+        condition: >-
+          'service.name' in resource.attributes && resource.attributes['service.name'] != '' &&
+          'service.instance.id' in resource.attributes && resource.attributes['service.instance.id'] != ''
     vars:
       - name: "namespace"
         value: >-
@@ -20,10 +22,7 @@ nodes:
       - name: "service"
         value: "resource.attributes['service.name']"
       - name: "instanceId"
-        value: >-
-          'service.instance.id' in resource.attributes ?
-          resource.attributes['service.instance.id'] :
-          resource.attributes['service.name']
+        value: "resource.attributes['service.instance.id']"
     output:
       sourceId: >-
         'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service

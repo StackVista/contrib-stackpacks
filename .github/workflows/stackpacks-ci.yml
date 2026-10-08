@@ -26,6 +26,21 @@ concurrency:
 
 jobs:
 
+  test-resource-identity:
+    name: Test OpenTelemetry resource identity
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Evaluate mapping regression cases
+        run: |
+          python3 -m venv /tmp/otel-mapping-tests
+          /tmp/otel-mapping-tests/bin/pip install -r tests/open-telemetry/requirements.txt
+          /tmp/otel-mapping-tests/bin/python -m unittest discover -s tests/open-telemetry -v
+
   discover-stackpacks:
     name: Discover stackpacks
     runs-on: ubuntu-24.04
@@ -80,20 +95,41 @@ jobs:
           STACKPACK: ${{ matrix.stackpack }}
           # Pinned snapshot of stackstate-server providing /opt/docker/bin/stack-pack-validator.
           # Bumped manually when validating a newer stackstate-server release.
-          VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:b7c3604-2.5
+          VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:7.0.0-snapshot.20260919173254-master-5674676-2.5@sha256:237a6ffc5510c11b6e68aa0228365cac511b38a7d708df991e51bffa1f271b38
         run: |
-          docker run --rm \
-            -v "${PWD}:/workspace" \
-            -w /workspace \
+          docker run --rm --network none \
+            --entrypoint /opt/docker/bin/stack-pack-validator \
+            -v "${PWD}:/workspace:ro" \
             "${VALIDATOR_IMAGE}" \
-            /opt/docker/bin/stack-pack-validator -directory "/workspace/stackpacks/${STACKPACK}"
+            -directory "/workspace/stackpacks/${STACKPACK}"
+
+      - name: Verify invalid CEL is rejected
+        if: matrix.stackpack == 'open-telemetry'
+        env:
+          VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:7.0.0-snapshot.20260919173254-master-5674676-2.5@sha256:237a6ffc5510c11b6e68aa0228365cac511b38a7d708df991e51bffa1f271b38
+        run: |
+          probe=$(mktemp -d)
+          trap 'rm -rf "${probe}"' EXIT
+          cp -r stackpacks/open-telemetry "${probe}/stackpack"
+          sed -i 's/name: "vars.service"/name: "undeclared_otel_variable"/' \
+            "${probe}/stackpack/settings/component-mappings/services.sty"
+          if docker run --rm --network none \
+            --entrypoint /opt/docker/bin/stack-pack-validator \
+            -v "${probe}/stackpack:/stackpack:ro" \
+            "${VALIDATOR_IMAGE}" -directory /stackpack > "${probe}/validation.log" 2>&1; then
+            cat "${probe}/validation.log"
+            echo 'Validator accepted an invalid mapping expression' >&2
+            exit 1
+          fi
+          grep -F 'undeclared_otel_variable' "${probe}/validation.log"
 
   package:
     name: package (${{ matrix.stackpack }})
-    needs: [discover-stackpacks, validate]
+    needs: [discover-stackpacks, validate, test-resource-identity]
     if: |
       always() &&
-      needs.validate.result == 'success'
+      needs.validate.result == 'success' &&
+      needs.test-resource-identity.result == 'success'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false

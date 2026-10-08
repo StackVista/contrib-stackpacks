@@ -10,9 +10,11 @@ nodes:
       resource:
         action: "'CREATE'"
         condition: >-
-          'k8s.cluster.name' in resource.attributes &&
-          'k8s.namespace.name' in resource.attributes &&
-          'k8s.pod.name' in resource.attributes
+          'k8s.cluster.name' in resource.attributes && resource.attributes['k8s.cluster.name'] != '' &&
+          'k8s.namespace.name' in resource.attributes && resource.attributes['k8s.namespace.name'] != '' &&
+          'k8s.pod.name' in resource.attributes && resource.attributes['k8s.pod.name'] != '' &&
+          'service.name' in resource.attributes && resource.attributes['service.name'] != '' &&
+          'service.instance.id' in resource.attributes && resource.attributes['service.instance.id'] != ''
     vars:
       - name: "clusterName"
         value: "resource.attributes['k8s.cluster.name']"
@@ -27,15 +29,9 @@ nodes:
           resource.attributes['service.namespace'] :
           'default'
       - name: "service"
-        value: >-
-          'service.name' in resource.attributes ?
-          resource.attributes['service.name'] :
-          ''
+        value: "resource.attributes['service.name']"
       - name: "instanceId"
-        value: >-
-          'service.instance.id' in resource.attributes ?
-          resource.attributes['service.instance.id'] :
-          resource.attributes['service.name']
+        value: "resource.attributes['service.instance.id']"
     output:
       sourceId: >-
         'urn:opentelemetry:kubernetes:/' + vars.clusterName + ':' + vars.namespaceName + ':pod/' + vars.podName

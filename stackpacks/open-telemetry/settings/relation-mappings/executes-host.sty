@@ -9,7 +9,10 @@ nodes:
         - "METRICS"
       resource:
         action: "'CREATE'"
-        condition: "'host.id' in resource.attributes"
+        condition: >-
+          'host.id' in resource.attributes && resource.attributes['host.id'] != '' &&
+          'service.name' in resource.attributes && resource.attributes['service.name'] != '' &&
+          'service.instance.id' in resource.attributes && resource.attributes['service.instance.id'] != ''
     vars:
       - name: "hostId"
         value: "resource.attributes['host.id']"
@@ -22,11 +25,7 @@ nodes:
       - name: "service"
         value: "resource.attributes['service.name']"
       - name: "instanceId"
-        value: >-
-          'service.instance.id' in resource.attributes &&
-          resource.attributes['service.instance.id'] != '' ?
-          resource.attributes['service.instance.id'] :
-          resource.attributes['service.name']
+        value: "resource.attributes['service.instance.id']"
     output:
       sourceId: "'urn:opentelemetry:host/' + vars.hostId"
       targetId: >-

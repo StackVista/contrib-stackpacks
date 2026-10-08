@@ -9,10 +9,16 @@ nodes:
         - "METRICS"
       resource:
         action: "'CREATE'"
-        condition: "'service.instance.id' in resource.attributes"
+        condition: >-
+          'service.name' in resource.attributes && resource.attributes['service.name'] != '' &&
+          'service.instance.id' in resource.attributes && resource.attributes['service.instance.id'] != ''
     vars:
       - name: "namespace"
-        value: "resource.attributes['service.namespace']"
+        value: >-
+          'service.namespace' in resource.attributes &&
+          resource.attributes['service.namespace'] != '' ?
+          resource.attributes['service.namespace'] :
+          'default'
       - name: "service"
         value: "resource.attributes['service.name']"
       - name: "version"
@@ -24,8 +30,6 @@ nodes:
         value: "resource.attributes['service.instance.id']"
       - name: "instanceName"
         value: "resource.attributes['service.name'] + ' - ' + resource.attributes['service.instance.id']"
-      - name: "clusterName"
-        value: "resource.attributes['k8s.cluster.name']"
     output:
       identifier: >-
         'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service + ':serviceInstance/' + vars.instanceId
@@ -40,19 +44,29 @@ nodes:
             target: "service.name"
           - source: "vars.namespace"
             target: "service.namespace"
-          - source: "vars.clusterName"
-            target: "cluster-name"
-          - source: "resource.attributes"
+          - source: "omit(resource.attributes, ['service.name', 'service.namespace'])"
             pattern: "(.*)"
             target: "${1}"
       optional:
         tags:
           - source: "resource.attributes['deployment.environment']"
             target: "deployment-environment"
-          - source: "vars.clusterName + '/' + resource.attributes['k8s.namespace.name']"
-            target: "k8s-scope"
-          - source: "resource.attributes['k8s.namespace.name']"
-            target: "namespace"
+          - source: >-
+              'k8s.cluster.name' in resource.attributes && resource.attributes['k8s.cluster.name'] != '' ?
+              {'cluster-name': resource.attributes['k8s.cluster.name']} : {}
+            pattern: "(.*)"
+            target: "${1}"
+          - source: >-
+              'k8s.cluster.name' in resource.attributes && resource.attributes['k8s.cluster.name'] != '' &&
+              'k8s.namespace.name' in resource.attributes && resource.attributes['k8s.namespace.name'] != '' ?
+              {'k8s-scope': resource.attributes['k8s.cluster.name'] + '/' + resource.attributes['k8s.namespace.name']} : {}
+            pattern: "(.*)"
+            target: "${1}"
+          - source: >-
+              'k8s.namespace.name' in resource.attributes && resource.attributes['k8s.namespace.name'] != '' ?
+              {'namespace': resource.attributes['k8s.namespace.name']} : {}
+            pattern: "(.*)"
+            target: "${1}"
     expireAfter: 900000
     rank:
       specificity: 210
