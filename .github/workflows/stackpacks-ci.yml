@@ -66,6 +66,8 @@ jobs:
     if: ${{ needs.discover-stackpacks.outputs.has_stackpacks == 'true' }}
     name: validate (${{ matrix.stackpack }})
     runs-on: ubuntu-24.04
+    env:
+      VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:7.0.0-snapshot.20261012082244-master-05004e2-2.5@sha256:2b980e1e2948eff5892e5815ed0d4a17780b8312b1eb2831234fdf7cfacfab8c
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
@@ -78,15 +80,18 @@ jobs:
       - name: Validate ${{ matrix.stackpack }}
         env:
           STACKPACK: ${{ matrix.stackpack }}
-          # Pinned snapshot of stackstate-server providing /opt/docker/bin/stack-pack-validator.
-          # Bumped manually when validating a newer stackstate-server release.
-          VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:b7c3604-2.5
+        run: bash scripts/ci/validate_stackpack.sh "stackpacks/${STACKPACK}"
+
+      - name: Verify validator rejects an invalid mapping expression
         run: |
-          docker run --rm \
-            -v "${PWD}:/workspace" \
-            -w /workspace \
-            "${VALIDATOR_IMAGE}" \
-            /opt/docker/bin/stack-pack-validator -directory "/workspace/stackpacks/${STACKPACK}"
+          output=$(mktemp)
+          if bash scripts/ci/validate_stackpack.sh tests/fixtures/invalid-component-mapping >"${output}" 2>&1; then
+            cat "${output}"
+            echo "Validator accepted an invalid mapping" >&2
+            exit 1
+          fi
+          cat "${output}"
+          grep -q "undeclared.*undeclaredValidationControl" "${output}"
 
   package:
     name: package (${{ matrix.stackpack }})
@@ -200,7 +205,7 @@ jobs:
           github.event.repository.owner.login == 'StackVista')
       ) &&
       needs.discover-stackpacks.outputs.has_stackpacks == 'true' &&
-      (needs.package.result == 'success' || needs.package.result == 'skipped')
+      needs.package.result == 'success'
     runs-on: ubuntu-24.04
     permissions:
       contents: read
