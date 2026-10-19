@@ -1,0 +1,15 @@
+### Storage node almost full
+More than **{{ threshold }}%** of this node's Portworx pool capacity is used. Volumes with replicas here can't grow, and new replicas can't be placed on this node.
+
+#### Check first
+1. [Node metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab: capacity, pool usage and replica count.
+2. [Portworx - Nodes and pools](/#/dashboards/urn:stackpack:portworx:dashboard:nodes): compare nodes. One full node usually means the replicas are spread unevenly.
+3. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl status` and `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool show` on the node.
+
+#### Fix
+1. Add capacity: expand the pool (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool expand`) or add drives to the StorageCluster.
+2. Rebalance replicas to emptier nodes: `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool rebalance` (Portworx 3.x) or `volume ha-update`.
+3. Delete unused volumes and old snapshots.
+
+#### Verify
+The used share drops below the threshold.

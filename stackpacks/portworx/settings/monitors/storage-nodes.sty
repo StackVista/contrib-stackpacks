@@ -1,0 +1,170 @@
+# Monitors: Portworx storage nodes, ported from the Portworx operator's alert rules.
+nodes:
+- _type: Monitor
+  name: Portworx - Storage node almost full
+  description: More than 80% of the node's Portworx pool capacity is used (Portworx alert PortworxStorageUsageCritical).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:storage-usage-critical
+  arguments:
+    metric:
+      query: 100 * max by (k8s_cluster_name, node) (min_over_time(px_cluster_disk_utilized_bytes{k8s_cluster_name!=""}[5m])) / max by (k8s_cluster_name, node) (px_cluster_disk_total_bytes{k8s_cluster_name!=""})
+      unit: percent
+      aliasTemplate: Used %
+    comparator: GT
+    threshold: 80.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Portworx storage used
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/storage-usage-critical.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Storage node filling up
+  description: More than 70% of the node's Portworx pool capacity is used (Portworx alert PortworxStorageUsage).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:storage-usage-warning
+  arguments:
+    metric:
+      query: 100 * max by (k8s_cluster_name, node) (min_over_time(px_cluster_disk_utilized_bytes{k8s_cluster_name!=""}[5m])) / max by (k8s_cluster_name, node) (px_cluster_disk_total_bytes{k8s_cluster_name!=""})
+      unit: percent
+      aliasTemplate: Used %
+    comparator: GT
+    threshold: 70.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Portworx storage used
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/storage-usage-warning.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Storage node will fill within 2 weeks
+  description: Less than 30% of the node's pool capacity is free and the last hour's trend fills it within 14 days (Portworx alert PortworxStorageWillFill).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:storage-will-fill
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, node) (predict_linear(px_cluster_disk_available_bytes{k8s_cluster_name!=""}[1h], 14 * 86400)) and on (k8s_cluster_name, node) (100 * max by (k8s_cluster_name, node) (px_cluster_disk_available_bytes{k8s_cluster_name!=""}) / max by (k8s_cluster_name, node) (px_cluster_disk_total_bytes{k8s_cluster_name!=""}) < 30)
+      unit: bytes(IEC)
+      aliasTemplate: Free space predicted in 14 days
+    comparator: LT
+    threshold: 0.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Predicted free space
+  intervalSeconds: 300
+  remediationHint: !include remediation-hints/storage-will-fill.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Storage node not OK
+  description: Portworx reports this node in a state other than OK for 5 minutes (offline, not in quorum, storage down...).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:node-status
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, node) (min_over_time((px_node_status_node_status{k8s_cluster_name!=""} != bool 2)[5m:1m]))
+      unit: short
+      aliasTemplate: Not OK (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Portworx node status
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/node-status.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Storage pool offline or full
+  description: A storage pool on this node is offline (0), full (2) or not found (3). Maintenance (4) and background activity such as a rebalance or expansion (6) are ignored.
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:pool-status
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, node, pool) ((px_pool_stats_status{k8s_cluster_name!=""} == bool 0) + (px_pool_stats_status{k8s_cluster_name!=""} == bool 2) + (px_pool_stats_status{k8s_cluster_name!=""} == bool 3))
+      unit: short
+      aliasTemplate: Offline, full or not found (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Pool ${pool} status
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/pool-status.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Storage pool degraded
+  description: A storage pool on this node is degraded (status 5).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:pool-degraded
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, node, pool) (px_pool_stats_status{k8s_cluster_name!=""} == bool 5)
+      unit: short
+      aliasTemplate: Degraded (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Pool ${pool} degraded
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/pool-degraded.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Storage pool nearly full
+  description: A single pool is close to the point where Portworx marks it full (free space below 10% of the pool or 100 GiB, whichever is smaller). A full pool puts the node in StorageDown and its volumes become read-only. Fires when free space drops below 1.5 times that limit, even if the node's total capacity looks fine.
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:pool-nearly-full
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, node, pool) (px_pool_stats_available_bytes{k8s_cluster_name!=""}) - 1.5 * clamp_max(0.1 * max by (k8s_cluster_name, node, pool) (px_pool_stats_total_bytes{k8s_cluster_name!=""}), 107374182400)
+      unit: bytes(IEC)
+      aliasTemplate: Free space above 1.5x the full limit
+    comparator: LT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: Pool ${pool} free space
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/pool-nearly-full.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - KVDB unhealthy on node
+  description: The node sees the Portworx key-value database as unhealthy for 5 minutes (Portworx alert PXKvdbNodeViewUnhealthy).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:kvdb-node-unhealthy
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, node) (min_over_time((px_kvdb_health_state_node_view{k8s_cluster_name!=""} == bool 2)[5m:1m]))
+      unit: short
+      aliasTemplate: Unhealthy (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    titleTemplate: KVDB health (node view)
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/kvdb-node-unhealthy.md.hbs
+  status: ENABLED

@@ -1,0 +1,54 @@
+# Component mapping: Portworx StorageCluster custom resource -> portworx cluster.
+# Needs the agent's k8s resource collector to watch the core.libopenstorage.org API group.
+nodes:
+  - _type: "OtelComponentMapping"
+    name: "Portworx cluster"
+    description: "Turns a Portworx StorageCluster custom resource into a Portworx cluster component"
+    identifier: "urn:stackpack:portworx:otel-component-mapping:cluster"
+    input:
+      signal:
+        - "LOGS"
+      resource:
+        scope:
+          log:
+            action: "log.body['type'] in ['ADDED', 'MODIFIED'] ? 'CREATE' : log.body['type'] == 'DELETED' ? 'DELETE' : 'CONTINUE'"
+            condition: >-
+              log.eventName == 'KubernetesCustomResourceEvent' &&
+              log.attributes['k8s.resource.group'] == 'core.libopenstorage.org' &&
+              log.body['object']['kind'] == 'StorageCluster'
+    vars:
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+      - name: "name"
+        value: "log.attributes['k8s.object.name']"
+      - name: "namespace"
+        value: "log.attributes['k8s.namespace.name']"
+    output:
+      identifier: "'urn:portworx:/' + vars.clusterName + ':cluster/' + vars.name"
+      name: "vars.name"
+      typeName: "'portworx cluster'"
+      required:
+        configuration: "log.body['object']['spec']"
+        tags:
+          - source: "'portworx'"
+            target: "stackpack"
+          - source: "vars.clusterName"
+            target: "cluster-name"
+          - source: "vars.namespace"
+            target: "namespace"
+          - source: "vars.name"
+            target: "portworx.cluster"
+      optional:
+        status: "log.body['object']['status']"
+        tags:
+          - source: "log.body['object']['status']['phase']"
+            target: "portworx.phase"
+          - source: "log.body['object']['status']['version']"
+            target: "portworx.version"
+          - source: "log.body['object']['status']['clusterUid']"
+            target: "portworx.cluster-uid"
+          - source: "log.body['object']['metadata']['creationTimestamp']"
+            target: "k8s.creationTimestamp"
+    expireAfter: 900000
+    rank:
+      specificity: 100

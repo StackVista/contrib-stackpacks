@@ -1,0 +1,10 @@
+### KVDB unhealthy on node
+For 5 minutes this node has seen the Portworx key-value database (internal KVDB or external etcd) as unhealthy. Without it, Portworx can't change volume state (create, attach, failover).
+
+#### Check first
+1. [Portworx - Cluster overview](/#/dashboards/urn:stackpack:portworx:dashboard:cluster-overview) → **KVDB health per node**: one node or all?
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service kvdb members` and `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service kvdb endpoints`.
+3. The `portworx-kvdb` pods and the KVDB disk: slow fsync is the most common cause.
+
+#### Fix
+Restore network between KVDB members, replace a slow or failed KVDB disk, or bring back the failed member.
