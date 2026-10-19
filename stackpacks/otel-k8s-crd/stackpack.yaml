@@ -1,5 +1,5 @@
 name: "otel-k8s-crd"
-version: "0.0.9"
+version: "0.0.10"
 schemaVersion: "2.0"
 displayName: "Kubernetes Custom Resources"
 categories: [ "Kubernetes" ]
@@ -15,3 +15,6 @@ configurationUrls:
   ERROR: !resource "error.md"
 provision:
   companionStackPacks: []
+observedInstances:
+  query: 'type = "custom resource definition" AND label = "stackpack:otel-k8s-crd"'
+  fields: ["tags.cluster-name"]
