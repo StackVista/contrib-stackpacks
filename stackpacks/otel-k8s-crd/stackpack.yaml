@@ -17,4 +17,7 @@ provision:
   companionStackPacks: []
 observedInstances:
   query: 'type = "custom resource definition" AND label = "stackpack:otel-k8s-crd"'
-  fields: ["tags.cluster-name"]
+  parameters:
+    - name: cluster_name
+      display: "Cluster"
+      source: tags.cluster-name
