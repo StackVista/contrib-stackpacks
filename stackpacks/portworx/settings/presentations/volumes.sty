@@ -1,0 +1,225 @@
+# Presentation: Portworx volume.
+nodes:
+- _type: ComponentPresentation
+  name: Portworx volume
+  description: Adds the Portworx list and metrics to persistent volumes that Portworx provides
+  identifier: urn:stackpack:portworx:component-presentation:volume
+  binding:
+    _type: ComponentPresentationQueryBinding
+    query: label = "stackpack:portworx" AND label = "source-type:portworx volume"
+  rank:
+    specificity: 110
+  presentation:
+    icon: !icon volume.svg
+    filters:
+    - filterId: px_k8s_cluster
+    - filterId: px_cluster
+    overview:
+      name:
+        singular: Portworx volume
+        plural: Portworx volumes
+        title: Volumes
+      mainMenu:
+        group: Portworx
+        order: 10
+      columns:
+      - columnId: health
+        title: Health
+        projection:
+          _type: HealthProjection
+          value: healthState
+      - columnId: name
+        title: Name
+        projection:
+          _type: ComponentLinkProjection
+          name: name
+          identifier: identifiers[0]
+      - columnId: pvc
+        title: Claim
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('persistent-volume-claim')
+      - columnId: k8s_cluster
+        title: Kubernetes cluster
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('cluster-name')
+      - columnId: replicas
+        title: Replicas
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('portworx.replicas')
+      - columnId: used
+        title: Used
+        projection:
+          _type: MetricProjection
+          sparkline: true
+          decimalPlaces: 0
+          unit: percentunit
+          query: max by (k8s_cluster_name, volumename) (px_volume_usage_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"}) / max by (k8s_cluster_name, volumename) (px_volume_capacity_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+          metricId: px-volume-usage
+      sort:
+      - columnId: health
+      - columnId: name
+    summary:
+      metrics:
+      - summaryMetricId: px_volume_usage_summary
+        name: Volume used
+        order: 100
+        decimalPlaces: 0
+        unit: percentunit
+        query: max by (k8s_cluster_name, volumename) (px_volume_usage_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"}) / max by (k8s_cluster_name, volumename) (px_volume_capacity_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+        metricId: px-volume-usage
+      - summaryMetricId: px_volume_latency_summary
+        name: Write latency
+        order: 90
+        decimalPlaces: 2
+        unit: s
+        query: max by (k8s_cluster_name, volumename) (px_volume_write_latency_seconds{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+        metricId: px-volume-latency
+    metricPerspective:
+      tabs:
+      - tabId: portworx
+        title: Portworx
+        order: 50
+        sections:
+        - sectionId: capacity
+          title: Capacity
+          order: 100
+          metrics:
+          - metricId: px-volume-usage
+          - metricId: px-volume-capacity
+        - sectionId: replication
+          title: Replication
+          order: 90
+          metrics:
+          - metricId: px-volume-replication
+          - metricId: px-volume-ha
+        - sectionId: performance
+          title: Performance
+          order: 80
+          metrics:
+          - metricId: px-volume-latency
+          - metricId: px-volume-iops
+          - metricId: px-volume-throughput
+          - metricId: px-volume-depth
+          - metricId: px-volume-long-io
+  metrics:
+  - metricId: px-volume-usage
+    name: Volume used
+    description: Share of the volume size that is in use.
+    metricQueries:
+    - expression: max(px_volume_usage_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"}) / max(px_volume_capacity_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Used
+    chart:
+      _type: GaugeChart
+      unit: percentunit
+      decimalPlaces: 0
+      max: 1
+      calculation: last
+      thresholds:
+        defaultColor: '#33A02C'
+        steps:
+        - color: '#E31A1C'
+          value: 0.8
+        - color: '#FF7F00'
+          value: 0.7
+        mode: absolute
+  - metricId: px-volume-capacity
+    name: Volume capacity
+    description: Used bytes, filesystem used bytes and size of the volume.
+    metricQueries:
+    - expression: max(px_volume_usage_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Used
+    - expression: max(px_volume_fs_usage_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Filesystem used
+    - expression: max(px_volume_capacity_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Size
+    chart:
+      _type: TimeSeriesChart
+      unit: bytes(IEC)
+  - metricId: px-volume-replication
+    name: Replication status
+    description: 0 up, 1 not in quorum, 2 resync, 3 degraded, 4 detached, 5 restore.
+    metricQueries:
+    - expression: max(px_volume_replication_status{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Status
+    chart:
+      _type: StatChart
+      unit: short
+      decimals: 0
+      calculation: last
+      sparkline: true
+      thresholds:
+        defaultColor: '#33A02C'
+        steps:
+        - color: '#FF7F00'
+          value: 1
+        - color: '#1F78B4'
+          value: 4
+  - metricId: px-volume-ha
+    name: Replicas
+    description: Configured replication factor and replicas currently in sync.
+    metricQueries:
+    - expression: max(px_volume_halevel{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Configured
+    - expression: min(px_volume_currhalevel{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Current
+    chart:
+      _type: TimeSeriesChart
+      unit: short
+  - metricId: px-volume-latency
+    name: Latency
+    description: Average read and write latency of the volume.
+    metricQueries:
+    - expression: max(px_volume_read_latency_seconds{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Read
+    - expression: max(px_volume_write_latency_seconds{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Write
+    chart:
+      _type: TimeSeriesChart
+      unit: s
+  - metricId: px-volume-iops
+    name: IOPS
+    description: Read and write operations per second on the volume.
+    metricQueries:
+    - expression: max(px_volume_read_iops{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Read
+    - expression: max(px_volume_write_iops{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Write
+    chart:
+      _type: TimeSeriesChart
+      unit: ops/sec
+  - metricId: px-volume-throughput
+    name: Throughput
+    description: Read and write throughput of the volume.
+    metricQueries:
+    - expression: max(px_volume_readthroughput{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Read
+    - expression: max(px_volume_writethroughput{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: Write
+    chart:
+      _type: TimeSeriesChart
+      unit: bytes/sec(IEC)
+  - metricId: px-volume-depth
+    name: Queue depth
+    description: I/O operations in progress on the volume.
+    metricQueries:
+    - expression: max(px_volume_depth_io{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"})
+      alias: In progress
+    chart:
+      _type: TimeSeriesChart
+      unit: short
+  - metricId: px-volume-long-io
+    name: Long I/Os
+    description: Reads, writes and flushes that Portworx counted as long, per 10 minutes. Long I/Os are the most direct sign of stalled storage.
+    metricQueries:
+    - expression: max(delta(px_volume_num_long_reads{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"}[10m]))
+      alias: Reads
+    - expression: max(delta(px_volume_num_long_writes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"}[10m]))
+      alias: Writes
+    - expression: max(delta(px_volume_num_long_flushes{k8s_cluster_name="${tags.singleValue('cluster-name')}", volumename="${name}"}[10m]))
+      alias: Flushes
+    chart:
+      _type: TimeSeriesChart
+      unit: short

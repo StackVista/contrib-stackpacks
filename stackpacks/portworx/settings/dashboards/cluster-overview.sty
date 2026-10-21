@@ -1,0 +1,793 @@
+# Dashboard: Portworx - Cluster overview.
+nodes:
+- _type: Dashboard
+  identifier: urn:stackpack:portworx:dashboard:cluster-overview
+  name: Portworx - Cluster overview
+  description: Capacity, health and performance of a Portworx cluster (mirrors the Portworx cluster dashboard).
+  dashboard:
+    metadata:
+      project: '{"saveVariables":false}'
+    spec:
+      panels:
+        cfd4ff6e63668cb6ee770:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps: []
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_status_nodes_online{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Nodes online
+            display:
+              name: Nodes online
+              description: Cluster members online.
+        179676c29b1640d96c82f:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps:
+                  - color: '#E31A1C'
+                    value: 1
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_status_nodes_storage_down{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Storage nodes down
+            display:
+              name: Storage nodes down
+              description: Storage nodes whose storage is down.
+        4b6013059829feb59af32:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps:
+                  - color: '#E31A1C'
+                    value: 2
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_status_quorum{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Quorum
+            display:
+              name: Quorum
+              description: 1 means the cluster has quorum.
+        867efc3d44e8b8da439ad:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#1F78B4'
+                  steps: []
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: count(max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}))
+                    alias: Volumes
+            display:
+              name: Volumes
+              description: Portworx volumes.
+        8f6d99854ec2753b33c83:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: percentunit
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps:
+                  - color: '#FF7F00'
+                    value: 0.7
+                  - color: '#E31A1C'
+                    value: 0.8
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(px_cluster_disk_utilized_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}) / sum(px_cluster_disk_total_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Capacity used
+            display:
+              name: Capacity used
+              description: Share of raw pool capacity in use.
+        853139287ac16ef969757:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#E31A1C'
+                  steps:
+                  - color: '#FF7F00'
+                    value: 5
+                  - color: '#33A02C'
+                    value: 30
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: min(px_node_status_license_expiry{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: License days left
+            display:
+              name: License days left
+              description: Days until the license expires.
+        3f8686d134bb2781aa284:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(px_cluster_disk_utilized_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Used
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(px_cluster_disk_total_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Total
+            display:
+              name: Storage capacity
+              description: Used and total raw pool capacity.
+        783d832ede5a3ad3b569f:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}))
+                    alias: Provisioned
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(px_cluster_disk_total_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Raw
+            display:
+              name: Provisioned vs raw capacity
+              description: Sum of volume sizes compared with raw capacity.
+        209ae9d9d7791282d9c1b:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_status_nodes_online{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Online
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_status_nodes_offline{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Offline
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_status_nodes_storage_down{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: Storage down
+            display:
+              name: Nodes
+              description: Members online/offline and storage down.
+        b84e2781e06592fc2dc36:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes/sec(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(max by (volumeid) (px_volume_readthroughput{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}))
+                    alias: Read
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(max by (volumeid) (px_volume_writethroughput{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}))
+                    alias: Write
+            display:
+              name: Volume throughput
+              description: Read and write throughput of all volumes.
+        702ef8f72fd6c5c6f9bef:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: ops/sec
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(max by (volumeid) (rate(px_volume_reads_total{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}[${__rate_interval}])))
+                    alias: Read
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(max by (volumeid) (rate(px_volume_writes_total{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}[${__rate_interval}])))
+                    alias: Write
+            display:
+              name: Volume IOPS
+              description: Read and write operations per second of all volumes.
+        be2619cedb8712bbcd69d:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_read_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"})
+                    alias: read ${node}
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_write_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"})
+                    alias: write ${node}
+            display:
+              name: I/O latency per node
+              description: Average latency of the I/O each node coordinates.
+        282fec98c095175ae684d:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: percent
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_cluster_cpu_percent{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: CPU per node
+              description: CPU used on each node.
+        37235948878747ddea4e3:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: percent
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_cluster_memory_utilized_percent{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: Memory per node
+              description: Memory used on each node.
+        457a58e4916f322f2f48d:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_cluster_pendingio{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: Pending I/O per node
+              description: I/O waiting in Portworx on each node.
+        ad04e6a1ab0069b991b46:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes/sec(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (rate(px_network_io_sent_bytes_total{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}[${__rate_interval}]))
+                    alias: sent ${node}
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (rate(px_network_io_received_bytes_total{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}[${__rate_interval}]))
+                    alias: received ${node}
+            display:
+              name: Network traffic per node
+              description: Bytes Portworx sends between nodes.
+        6eab488af3ff3e36b4773:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max(px_cluster_trashcan_volumes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: In trashcan
+            display:
+              name: Volumes in trashcan
+              description: Deleted volumes still kept in the trashcan; they keep using pool capacity.
+        80653d35c7bb3cd2530f9:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_kvdb_health_state_node_view{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: KVDB health per node
+              description: 1 healthy, 2 unhealthy.
+        2403628a8b692423b9403:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: histogram_quantile(0.99, sum by (k8s_cluster_name, node, le) (rate(px_kvdb_watch_latency_seconds_bucket{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}[${__rate_interval}])))
+                    alias: ${node}
+            display:
+              name: KVDB watch latency (p99)
+              description: 99th percentile latency of KVDB watches per node.
+      layouts:
+      - kind: Grid
+        spec:
+          items:
+          - x: 0
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/cfd4ff6e63668cb6ee770'
+          - x: 4
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/179676c29b1640d96c82f'
+          - x: 8
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/4b6013059829feb59af32'
+          - x: 12
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/867efc3d44e8b8da439ad'
+          - x: 16
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/8f6d99854ec2753b33c83'
+          - x: 20
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/853139287ac16ef969757'
+          - x: 0
+            y: 1
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/3f8686d134bb2781aa284'
+          - x: 8
+            y: 1
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/783d832ede5a3ad3b569f'
+          - x: 16
+            y: 1
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/209ae9d9d7791282d9c1b'
+          - x: 0
+            y: 3
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/b84e2781e06592fc2dc36'
+          - x: 8
+            y: 3
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/702ef8f72fd6c5c6f9bef'
+          - x: 16
+            y: 3
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/be2619cedb8712bbcd69d'
+          - x: 0
+            y: 5
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/282fec98c095175ae684d'
+          - x: 8
+            y: 5
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/37235948878747ddea4e3'
+          - x: 16
+            y: 5
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/457a58e4916f322f2f48d'
+          - x: 0
+            y: 7
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/ad04e6a1ab0069b991b46'
+          - x: 8
+            y: 7
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/6eab488af3ff3e36b4773'
+          - x: 16
+            y: 7
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/80653d35c7bb3cd2530f9'
+          - x: 0
+            y: 9
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/2403628a8b692423b9403'
+      variables:
+      - kind: ListVariable
+        spec:
+          plugin:
+            kind: MetricLabelValues
+            spec:
+              labelName: k8s_cluster_name
+              matchers:
+              - px_cluster_status_size
+          sort: alphabetical-asc
+          allowMultiple: false
+          allowAllValue: false
+          name: cluster
+          display:
+            name: Cluster
+            description: Kubernetes cluster
+      - kind: ListVariable
+        spec:
+          plugin:
+            kind: MetricPromQL
+            spec:
+              labelName: cluster
+              expr: px_cluster_status_size{k8s_cluster_name="${cluster}"}
+          sort: alphabetical-asc
+          allowMultiple: false
+          allowAllValue: false
+          name: pxcluster
+          display:
+            name: Portworx cluster
+            description: Portworx StorageCluster

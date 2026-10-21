@@ -1,0 +1,508 @@
+# Dashboard: Portworx - Nodes and pools.
+nodes:
+- _type: Dashboard
+  identifier: urn:stackpack:portworx:dashboard:nodes
+  name: Portworx - Nodes and pools
+  description: Per node and per pool capacity and performance (mirrors the Portworx node and performance dashboards).
+  dashboard:
+    metadata:
+      project: '{"saveVariables":false}'
+    spec:
+      panels:
+        6043d9c21f5ca511bae12:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: percentunit
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_cluster_disk_utilized_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}) / max by (k8s_cluster_name, node) (px_cluster_disk_total_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: Storage used per node
+              description: Used share of each node's pool capacity.
+        aa98989b33c22d6639dff:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: percentunit
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node, pool) (px_pool_stats_used_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"}) / max by (k8s_cluster_name, node, pool) (px_pool_stats_total_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node} ${pool}
+            display:
+              name: Pool usage
+              description: Used share of each storage pool.
+        d6562c2273ab7e4b039c8:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_status_node_status{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: Node status
+              description: 2 is OK; 3 offline, 5 not in quorum, 8 storage down.
+        f9c717ceefc0b43c5bab0:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_read_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"})
+                    alias: ${node}
+            display:
+              name: Read latency per node
+              description: Average read latency of coordinated I/O.
+        461e2ec56635fad3fc78d:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_write_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"})
+                    alias: ${node}
+            display:
+              name: Write latency per node
+              description: Average write latency of coordinated I/O.
+        0b7952737ea15497b5237:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: ops/sec
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_read_iops{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"}) + max by (k8s_cluster_name, node) (px_node_stats_write_iops{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"})
+                    alias: ${node}
+            display:
+              name: IOPS per node
+              description: Read plus write operations per second of coordinated I/O.
+        871ca34adc88e35878abe:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes/sec(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_readthroughput{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"}) + max by (k8s_cluster_name, node) (px_node_stats_writethroughput{k8s_cluster_name="${cluster}", cluster="${pxcluster}", coordinator="1"})
+                    alias: ${node}
+            display:
+              name: Throughput per node
+              description: Read plus write throughput of coordinated I/O.
+        c83bab232f4046e6b1b6f:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node, pool) (px_pool_stats_write_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node} ${pool}
+            display:
+              name: Pool write latency
+              description: Average write latency of each pool.
+        667f919d9d6402caf1d64:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node, pool) (px_pool_stats_flush_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node} ${pool}
+            display:
+              name: Pool flush latency
+              description: Average flush latency of each pool.
+        ffe576922a9c9d953e17b:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node, disk) (px_disk_stats_read_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: read ${node} ${disk}
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node, disk) (px_disk_stats_write_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: write ${node} ${disk}
+            display:
+              name: Disk latency
+              description: Average read and write latency of each disk.
+        fa0b584419ee80509783d:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (k8s_cluster_name, node) (px_node_stats_volume_replica_count{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: Volume replicas per node
+              description: Volume replicas stored on each node.
+        4a7380d5763ca54a4c82e:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum by (k8s_cluster_name, node) (px_proc_stats_res{k8s_cluster_name="${cluster}", cluster="${pxcluster}"})
+                    alias: ${node}
+            display:
+              name: Portworx process memory
+              description: Resident memory of the Portworx processes per node.
+      layouts:
+      - kind: Grid
+        spec:
+          items:
+          - x: 0
+            y: 0
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/6043d9c21f5ca511bae12'
+          - x: 8
+            y: 0
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/aa98989b33c22d6639dff'
+          - x: 16
+            y: 0
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/d6562c2273ab7e4b039c8'
+          - x: 0
+            y: 2
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/f9c717ceefc0b43c5bab0'
+          - x: 8
+            y: 2
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/461e2ec56635fad3fc78d'
+          - x: 16
+            y: 2
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/0b7952737ea15497b5237'
+          - x: 0
+            y: 4
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/871ca34adc88e35878abe'
+          - x: 8
+            y: 4
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/c83bab232f4046e6b1b6f'
+          - x: 16
+            y: 4
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/667f919d9d6402caf1d64'
+          - x: 0
+            y: 6
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/ffe576922a9c9d953e17b'
+          - x: 8
+            y: 6
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/fa0b584419ee80509783d'
+          - x: 16
+            y: 6
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/4a7380d5763ca54a4c82e'
+      variables:
+      - kind: ListVariable
+        spec:
+          plugin:
+            kind: MetricLabelValues
+            spec:
+              labelName: k8s_cluster_name
+              matchers:
+              - px_cluster_status_size
+          sort: alphabetical-asc
+          allowMultiple: false
+          allowAllValue: false
+          name: cluster
+          display:
+            name: Cluster
+            description: Kubernetes cluster
+      - kind: ListVariable
+        spec:
+          plugin:
+            kind: MetricPromQL
+            spec:
+              labelName: cluster
+              expr: px_cluster_status_size{k8s_cluster_name="${cluster}"}
+          sort: alphabetical-asc
+          allowMultiple: false
+          allowAllValue: false
+          name: pxcluster
+          display:
+            name: Portworx cluster
+            description: Portworx StorageCluster

@@ -1,0 +1,10 @@
+### Storage pool offline or full
+A storage pool on this node is **offline** (0), **full** (2) or **not found** (3). The **Pool status** chart shows which pool and which code. A full or offline pool puts the node in StorageDown, and volumes with replicas on it become read-only or degraded.
+
+#### Check first
+1. [Node metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Health** and **Capacity**.
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool show` on the node, and `dmesg` for disk errors.
+
+#### Fix
+- Full: expand the pool (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool expand`), or move replicas off it (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool rebalance`).
+- Offline or not found: check the drive and its path, replace a failed drive (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service drive replace`), then let Portworx resync.

@@ -1,0 +1,15 @@
+### Storage node not OK
+For 5 minutes Portworx has reported this node in a state other than OK (2). Common codes: 3 offline, 5 not in quorum, 8 storage down.
+
+#### Check first
+1. [Node metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Health**: status code, pool status, KVDB health.
+2. The `px-cluster` pod on this node: is it running and ready? Read its logs (container `portworx`).
+3. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl status` on the node, and `kubectl -n <portworx-namespace> get storagenodes`.
+
+#### Likely causes
+- The node lost network to the other Portworx nodes (ports 9001-9022).
+- A pool disk failed, or the pool is full.
+- The `px-cluster` pod can't start. On RKE2, an empty directory at `/run/containerd/containerd.sock` blocks it ("not a directory").
+
+#### Verify
+The status returns to 2 and the StorageNode phase is Online.

@@ -1,0 +1,10 @@
+### Cluster member down
+For 5 minutes fewer nodes have been online than the cluster size.
+
+#### Check first
+1. [Cluster metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Nodes**: online, offline, storage down.
+2. `kubectl -n <portworx-namespace> get storagenodes` and the `px-cluster` pods.
+
+#### Likely causes
+- A node is powered off, cordoned and drained, or the `px-cluster` pod there isn't running.
+- A node was removed from Kubernetes but not decommissioned in Portworx (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl cluster delete <node-id>`).

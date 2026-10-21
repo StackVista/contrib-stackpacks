@@ -1,0 +1,9 @@
+### Volume filesystem needs inspection
+Portworx's filesystem check found errors that it can't fix safely on its own (filesystem health 3). Mounting or resizing the volume can fail until they are fixed.
+
+#### Check first
+`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume check status <volume>`.
+
+#### Fix
+1. Stop the workload that uses the volume.
+2. Run `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume check start --mode check_health <volume>` to see the errors, then `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume check start --mode fix_all <volume>` if you accept the repairs. `fix_all` can discard damaged data, so take a snapshot first.

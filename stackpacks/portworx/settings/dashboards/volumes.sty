@@ -1,0 +1,617 @@
+# Dashboard: Portworx - Volumes.
+nodes:
+- _type: Dashboard
+  identifier: urn:stackpack:portworx:dashboard:volumes
+  name: Portworx - Volumes
+  description: Usage, replication and performance of Portworx volumes (mirrors the Portworx volume dashboard).
+  dashboard:
+    metadata:
+      project: '{"saveVariables":false}'
+    spec:
+      panels:
+        1579ee38b12d44ffdb736:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#1F78B4'
+                  steps: []
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: count(max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: Volumes
+            display:
+              name: Volumes
+              description: Portworx volumes.
+        aa4fa3221f6c530ba95ca:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#1F78B4'
+                  steps: []
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: count(max by (volumeid) (px_volume_attached{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) > 0) or vector(0)
+                    alias: Attached
+            display:
+              name: Attached
+              description: Attached volumes.
+        2c5b8f69b1b20b088c450:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps:
+                  - color: '#FF7F00'
+                    value: 1
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: count(max by (volumeid) (px_volume_halevel{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) - min by (volumeid) (px_volume_currhalevel{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) > 0) or vector(0)
+                    alias: Not fully replicated
+            display:
+              name: Not fully replicated
+              description: Volumes with fewer replicas in sync than configured.
+        2d7caf583756eed724f24:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps:
+                  - color: '#FF7F00'
+                    value: 1
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: count(max by (volumeid) (px_volume_replication_status{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) >= 1 <= 3) or vector(0)
+                    alias: Degraded or resyncing
+            display:
+              name: Degraded or resyncing
+              description: Volumes with replication status 1 (no quorum), 2 (resync) or 3 (degraded).
+        4d99823d2932c0afba1b9:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: short
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#33A02C'
+                  steps:
+                  - color: '#E31A1C'
+                    value: 1
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: count(max by (volumeid) (px_volume_usage_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) / max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) > 0.8) or vector(0)
+                    alias: Above 80% full
+            display:
+              name: Above 80% full
+              description: Volumes using more than 80% of their size.
+        bf2b2be2ecb8f63cfffc3:
+          spec:
+            plugin:
+              kind: StatChart
+              spec:
+                calculation: last
+                format:
+                  unit: bytes(IEC)
+                  decimalPlaces: 0
+                sparkline: true
+                thresholds:
+                  defaultColor: '#1F78B4'
+                  steps: []
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: sum(max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: Provisioned
+            display:
+              name: Provisioned
+              description: Sum of volume sizes.
+        50d9229f7cbfe677d0a72:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: percentunit
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_usage_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) / max by (namespace, pvc) (px_volume_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 volumes by usage
+              description: Used share of the volume size.
+        7f5ec0394a796c81402d2:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_read_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 read latency
+              description: Average read latency per volume.
+        e7ec15e862c3d6bbab620:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: s
+                    decimalPlaces: 4
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_write_latency_seconds{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 write latency
+              description: Average write latency per volume.
+        7f3e96187ee73431a4062:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: ops/sec
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_read_iops{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) + max by (namespace, pvc) (px_volume_write_iops{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 IOPS
+              description: Read plus write operations per second per volume.
+        953d446c51bd8179a4175:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: bytes/sec(IEC)
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_readthroughput{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) + max by (namespace, pvc) (px_volume_writethroughput{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 throughput
+              description: Read plus write throughput per volume.
+        495e074ca7ce0814905fa:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_depth_io{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 queue depth
+              description: I/O operations in progress per volume.
+        684ebd1910bbcb63eed09:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (namespace, pvc) (px_volume_replication_status{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) > 0
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Replication status
+              description: 'Volumes whose status is not 0 (up): 1 no quorum, 2 resync, 3 degraded, 4 detached, 5 restore.'
+        00cf10217a66571779d47:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: max by (namespace, pvc) (px_volume_halevel{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) - min by (namespace, pvc) (px_volume_currhalevel{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) > 0
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Missing replicas
+              description: Configured replicas minus replicas in sync, per volume.
+        07371603ede3ec157e9e0:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: short
+                    decimalPlaces: 0
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (delta(px_volume_num_long_reads{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}[10m])) + max by (namespace, pvc) (delta(px_volume_num_long_writes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}[10m])) + max by (namespace, pvc) (delta(px_volume_num_long_flushes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}[10m])))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Top 10 long I/Os
+              description: Reads, writes and flushes counted as long per 10 minutes, per volume.
+        d7ea877a629f0e59fabbe:
+          spec:
+            plugin:
+              kind: TimeSeriesChart
+              spec:
+                yAxis:
+                  show: true
+                  format:
+                    unit: percentunit
+                    decimalPlaces: 2
+                legend:
+                  show: true
+                  position: bottom
+                  mode: list
+                  values: []
+                thresholds:
+                  mode: absolute
+                  steps: []
+                visual:
+                  connectNulls: false
+            links: []
+            queries:
+            - kind: TimeSeriesQuery
+              spec:
+                plugin:
+                  kind: PrometheusTimeSeriesQuery
+                  spec:
+                    query: topk(10, max by (namespace, pvc) (px_volume_fs_usage_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""}) / max by (namespace, pvc) (px_volume_fs_capacity_bytes{k8s_cluster_name="${cluster}", cluster="${pxcluster}", volumename!=""} > 0))
+                    alias: ${namespace}/${pvc}
+            display:
+              name: Filesystem usage
+              description: Filesystem used share per volume (only for mounted filesystems).
+      layouts:
+      - kind: Grid
+        spec:
+          items:
+          - x: 0
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/1579ee38b12d44ffdb736'
+          - x: 4
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/aa4fa3221f6c530ba95ca'
+          - x: 8
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/2c5b8f69b1b20b088c450'
+          - x: 12
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/2d7caf583756eed724f24'
+          - x: 16
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/4d99823d2932c0afba1b9'
+          - x: 20
+            y: 0
+            width: 4
+            height: 1
+            content:
+              $ref: '#/spec/panels/bf2b2be2ecb8f63cfffc3'
+          - x: 0
+            y: 1
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/50d9229f7cbfe677d0a72'
+          - x: 8
+            y: 1
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/7f5ec0394a796c81402d2'
+          - x: 16
+            y: 1
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/e7ec15e862c3d6bbab620'
+          - x: 0
+            y: 3
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/7f3e96187ee73431a4062'
+          - x: 8
+            y: 3
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/953d446c51bd8179a4175'
+          - x: 16
+            y: 3
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/495e074ca7ce0814905fa'
+          - x: 0
+            y: 5
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/684ebd1910bbcb63eed09'
+          - x: 8
+            y: 5
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/00cf10217a66571779d47'
+          - x: 16
+            y: 5
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/07371603ede3ec157e9e0'
+          - x: 0
+            y: 7
+            width: 8
+            height: 2
+            content:
+              $ref: '#/spec/panels/d7ea877a629f0e59fabbe'
+      variables:
+      - kind: ListVariable
+        spec:
+          plugin:
+            kind: MetricLabelValues
+            spec:
+              labelName: k8s_cluster_name
+              matchers:
+              - px_cluster_status_size
+          sort: alphabetical-asc
+          allowMultiple: false
+          allowAllValue: false
+          name: cluster
+          display:
+            name: Cluster
+            description: Kubernetes cluster
+      - kind: ListVariable
+        spec:
+          plugin:
+            kind: MetricPromQL
+            spec:
+              labelName: cluster
+              expr: px_cluster_status_size{k8s_cluster_name="${cluster}"}
+          sort: alphabetical-asc
+          allowMultiple: false
+          allowAllValue: false
+          name: pxcluster
+          display:
+            name: Portworx cluster
+            description: Portworx StorageCluster
