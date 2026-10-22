@@ -1,5 +1,5 @@
 name: "otel-k8s-crd"
-version: "0.0.9"
+version: "0.0.11"
 schemaVersion: "2.0"
 displayName: "Kubernetes Custom Resources"
 categories: [ "Kubernetes" ]
@@ -15,3 +15,9 @@ configurationUrls:
   ERROR: !resource "error.md"
 provision:
   companionStackPacks: []
+ingestion:
+  cluster:
+    display: "OpenTelemetry Kubernetes CRDs"
+    description: "Custom resource definitions collected by the agent's resource collector."
+    dataTypes:
+      topology: 'type = "custom resource definition" AND label = "stackpack:otel-k8s-crd"'
