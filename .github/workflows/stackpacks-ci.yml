@@ -236,6 +236,8 @@ jobs:
         id: tag
         run: |
           git_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          # Branch names may contain characters such as "/" that Docker tags reject.
+          git_branch="${git_branch//[^a-zA-Z0-9_.-]/-}"
           git_commit_sha_short=$(git rev-parse --short=7 HEAD)
           git_last_commit_timestamp=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:'%Y%m%d%H%M%S')
           echo "value=${git_last_commit_timestamp}-${git_branch}-${git_commit_sha_short}" >> "$GITHUB_OUTPUT"
