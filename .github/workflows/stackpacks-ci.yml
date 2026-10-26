@@ -236,6 +236,8 @@ jobs:
         id: tag
         run: |
           git_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
+          # Branch names may contain characters such as "/" that Docker tags reject.
+          git_branch="${git_branch//[^a-zA-Z0-9_.-]/-}"
           git_commit_sha_short=$(git rev-parse --short=7 HEAD)
           git_last_commit_timestamp=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:'%Y%m%d%H%M%S')
           echo "value=${git_last_commit_timestamp}-${git_branch}-${git_commit_sha_short}" >> "$GITHUB_OUTPUT"
@@ -274,7 +276,7 @@ jobs:
           fi
 
       - name: Scan image
-        uses: StackVista/image-pipeline/.github/actions/scan-image@b6440004f2ed34dfc602d4cfb4c2ba5e353aeea3 # main
+        uses: StackVista/image-pipeline/.github/actions/scan-image@508730536961e38718dbc2403448e2d418b1136f # main
         with:
           image: ${{ steps.local-image.outputs.ref }}
           mode: inform
