@@ -20,12 +20,14 @@ nodes:
         value: "resource.attributes['k8s.namespace.name']"
       - name: "podName"
         value: "resource.attributes['k8s.pod.name']"
-      - name: "serviceNamespace"
+      # OTel: service.name is required, service.namespace is optional; unset or empty means "no namespace", not a default one.
+      # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
+      - name: "serviceUrnPrefix"
         value: >-
           'service.namespace' in resource.attributes &&
           resource.attributes['service.namespace'] != '' ?
-          resource.attributes['service.namespace'] :
-          'default'
+          'urn:opentelemetry:namespace/' + resource.attributes['service.namespace'] + ':service/' :
+          'urn:opentelemetry:service/'
       - name: "service"
         value: >-
           'service.name' in resource.attributes ?
@@ -40,7 +42,7 @@ nodes:
       sourceId: >-
         'urn:opentelemetry:kubernetes:/' + vars.clusterName + ':' + vars.namespaceName + ':pod/' + vars.podName
       targetId: >-
-        'urn:opentelemetry:namespace/' + vars.serviceNamespace + ':service/' + vars.service + ':serviceInstance/' + vars.instanceId
+        vars.serviceUrnPrefix + vars.service + ':serviceInstance/' + vars.instanceId
       typeName: "'kubernetes-to-otel'"
       dependencyType: "'UNCLASSIFIED'"
     expireAfter: 900000

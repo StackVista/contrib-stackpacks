@@ -11,12 +11,14 @@ nodes:
         action: "'CREATE'"
         condition: "'service.name' in resource.attributes"
     vars:
-      - name: "namespace"
+      # OTel: service.name is required, service.namespace is optional; unset or empty means "no namespace", not a default one.
+      # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
+      - name: "serviceUrnPrefix"
         value: >-
           'service.namespace' in resource.attributes &&
           resource.attributes['service.namespace'] != '' ?
-          resource.attributes['service.namespace'] :
-          'default'
+          'urn:opentelemetry:namespace/' + resource.attributes['service.namespace'] + ':service/' :
+          'urn:opentelemetry:service/'
       - name: "service"
         value: "resource.attributes['service.name']"
       - name: "instanceId"
@@ -26,9 +28,9 @@ nodes:
           resource.attributes['service.name']
     output:
       sourceId: >-
-        'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service
+        vars.serviceUrnPrefix + vars.service
       targetId: >-
-        'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service + ':serviceInstance/' + vars.instanceId
+        vars.serviceUrnPrefix + vars.service + ':serviceInstance/' + vars.instanceId
       typeName: "'provided-by'"
       dependencyType: "'HIERARCHICAL'"
     expireAfter: 900000
