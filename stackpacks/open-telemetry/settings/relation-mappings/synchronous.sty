@@ -19,12 +19,12 @@ nodes:
                 'connection_type' in datapoint.attributes &&
                 datapoint.attributes['connection_type'] == ''
     vars:
-      # OTel: service.namespace is optional; when unset or empty the service has no namespace, not a default one.
+      # OTel: service.namespace is optional and an unset namespace is itself a valid namespace, encoded here as the empty string.
       # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
-      - name: "clientServiceUrnPrefix"
-        value: "('client_service.namespace' in datapoint.attributes && datapoint.attributes['client_service.namespace'] != '' ? 'urn:opentelemetry:namespace/' + datapoint.attributes['client_service.namespace'] + ':service/' : 'urn:opentelemetry:service/')"
-      - name: "serverServiceUrnPrefix"
-        value: "('server_service.namespace' in datapoint.attributes && datapoint.attributes['server_service.namespace'] != '' ? 'urn:opentelemetry:namespace/' + datapoint.attributes['server_service.namespace'] + ':service/' : 'urn:opentelemetry:service/')"
+      - name: "clientServiceNamespace"
+        value: "('client_service.namespace' in datapoint.attributes ? datapoint.attributes['client_service.namespace'] : '')"
+      - name: "serverServiceNamespace"
+        value: "('server_service.namespace' in datapoint.attributes ? datapoint.attributes['server_service.namespace'] : '')"
       - name: "client"
         value: "datapoint.attributes['client']"
       - name: "server"
@@ -41,9 +41,9 @@ nodes:
           datapoint.attributes['server']
     output:
       sourceId: >-
-        vars.clientServiceUrnPrefix + vars.client + ':serviceInstance/' + vars.clientServiceInstanceId
+        'urn:opentelemetry:namespace/' + vars.clientServiceNamespace + ':service/' + vars.client + ':serviceInstance/' + vars.clientServiceInstanceId
       targetId: >-
-        vars.serverServiceUrnPrefix + vars.server + ':serviceInstance/' + vars.serverServiceInstanceId
+        'urn:opentelemetry:namespace/' + vars.serverServiceNamespace + ':service/' + vars.server + ':serviceInstance/' + vars.serverServiceInstanceId
       typeName: "'synchronous'"
       dependencyType: "'CONNECTION'"
     expireAfter: 900000

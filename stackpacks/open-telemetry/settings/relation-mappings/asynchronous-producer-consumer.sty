@@ -20,18 +20,18 @@ nodes:
                 datapoint.attributes['connection_type'] == 'messaging_system' &&
                 !('client_peer.service' in datapoint.attributes)
     vars:
-      # OTel: service.namespace is optional; when unset or empty the service has no namespace, not a default one.
+      # OTel: service.namespace is optional and an unset namespace is itself a valid namespace, encoded here as the empty string.
       # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
       - name: "sourceId"
         value: >-
           'client_service.instance.id' in datapoint.attributes ?
-          ('client_service.namespace' in datapoint.attributes && datapoint.attributes['client_service.namespace'] != '' ? 'urn:opentelemetry:namespace/' + datapoint.attributes['client_service.namespace'] + ':service/' : 'urn:opentelemetry:service/') + datapoint.attributes['client'] + ":serviceInstance/" + datapoint.attributes['client_service.instance.id'] :
-          ('client_service.namespace' in datapoint.attributes && datapoint.attributes['client_service.namespace'] != '' ? 'urn:opentelemetry:namespace/' + datapoint.attributes['client_service.namespace'] + ':service/' : 'urn:opentelemetry:service/') + datapoint.attributes['client'] + ":serviceInstance/" + datapoint.attributes['client']
+          "urn:opentelemetry:namespace/" + ('client_service.namespace' in datapoint.attributes ? datapoint.attributes['client_service.namespace'] : '') + ":service/" + datapoint.attributes['client'] + ":serviceInstance/" + datapoint.attributes['client_service.instance.id'] :
+          "urn:opentelemetry:namespace/" + ('client_service.namespace' in datapoint.attributes ? datapoint.attributes['client_service.namespace'] : '') + ":service/" + datapoint.attributes['client'] + ":serviceInstance/" + datapoint.attributes['client']
       - name: "targetId"
         value: >-
           'server_service.instance.id' in datapoint.attributes ?
-          ('server_service.namespace' in datapoint.attributes && datapoint.attributes['server_service.namespace'] != '' ? 'urn:opentelemetry:namespace/' + datapoint.attributes['server_service.namespace'] + ':service/' : 'urn:opentelemetry:service/') + datapoint.attributes['server'] + ":serviceInstance/" + datapoint.attributes['server_service.instance.id'] :
-          ('server_service.namespace' in datapoint.attributes && datapoint.attributes['server_service.namespace'] != '' ? 'urn:opentelemetry:namespace/' + datapoint.attributes['server_service.namespace'] + ':service/' : 'urn:opentelemetry:service/') + datapoint.attributes['server'] + ":serviceInstance/" + datapoint.attributes['server']
+          "urn:opentelemetry:namespace/" + ('server_service.namespace' in datapoint.attributes ? datapoint.attributes['server_service.namespace'] : '') + ":service/" + datapoint.attributes['server'] + ":serviceInstance/" + datapoint.attributes['server_service.instance.id'] :
+          "urn:opentelemetry:namespace/" + ('server_service.namespace' in datapoint.attributes ? datapoint.attributes['server_service.namespace'] : '') + ":service/" + datapoint.attributes['server'] + ":serviceInstance/" + datapoint.attributes['server']
     output:
       sourceId: "vars.sourceId"
       targetId: "vars.targetId"

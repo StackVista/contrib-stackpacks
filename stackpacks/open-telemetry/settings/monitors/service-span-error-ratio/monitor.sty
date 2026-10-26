@@ -5,17 +5,16 @@ nodes:
       failureState: DEVIATING
       metric:
         query: |-
-          label_replace(label_replace(
+          label_replace(
             sum by(service_namespace, service_name)(rate(otel_span_calls_total{status_code="STATUS_CODE_ERROR", span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]) or (present_over_time(otel_span_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]) -1)) / sum by(service_namespace, service_name)(rate(otel_span_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m])) * 100
-          , "urn_prefix", "urn:opentelemetry:service/", "service_namespace", "")
-          , "urn_prefix", "urn:opentelemetry:namespace/$1:service/", "service_namespace", "(.+)")
+          , "service_urn_prefix", "urn:opentelemetry:namespace/$1:service/", "service_namespace", "(.*)")
         aliasTemplate: Error ratio (errors/total)
         unit: percent
       threshold: 5
       titleTemplate: Span error ratio
-      # OTel: service.namespace is optional; series without it belong to a service with no namespace, not a default one.
+      # OTel: service.namespace is optional and an unset namespace is itself a valid namespace, encoded here as the empty string.
       # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
-      urnTemplate: "${urn_prefix}${service_name}"
+      urnTemplate: "${service_urn_prefix}${service_name}"
     description: |
       Percentage of server and consumer spans that are in an error state for the service.
     function: urn:stackpack:common:monitor-function:threshold

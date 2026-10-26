@@ -6,19 +6,18 @@ nodes:
       metric:
         # _seconds_ = telemetry gateway (target/new spanmetrics default); _milliseconds_ = standalone collector (current spanmetrics default, transitioning to s per OTel semantic conventions)
         query: |-
-          label_replace(label_replace(
+          label_replace(
             (histogram_quantile(0.95, sum by(service_namespace, service_name, service_instance_id, le)(rate(otel_span_duration_seconds_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))))
             or
             (histogram_quantile(0.95, sum by(service_namespace, service_name, service_instance_id, le)(rate(otel_span_duration_milliseconds_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))) / 1000)
-          , "urn_prefix", "urn:opentelemetry:service/", "service_namespace", "")
-          , "urn_prefix", "urn:opentelemetry:namespace/$1:service/", "service_namespace", "(.+)")
+          , "service_urn_prefix", "urn:opentelemetry:namespace/$1:service/", "service_namespace", "(.*)")
         aliasTemplate: Span duration 95th percentile
         unit: s
       threshold: 5
       titleTemplate: Span duration
-      # OTel: service.namespace is optional; series without it belong to a service with no namespace, not a default one.
+      # OTel: service.namespace is optional and an unset namespace is itself a valid namespace, encoded here as the empty string.
       # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
-      urnTemplate: "${urn_prefix}${service_name}:serviceInstance/${service_instance_id}"
+      urnTemplate: "${service_urn_prefix}${service_name}:serviceInstance/${service_instance_id}"
     description: |
       Monitors the duration of the server and consumer spans. When the 95th percentile of the duration is greater than the threshold (default 5s) the monitor has a Deviating state.
     function: urn:stackpack:common:monitor-function:threshold

@@ -11,19 +11,13 @@ nodes:
         action: "'CREATE'"
         condition: "'service.name' in resource.attributes"
     vars:
-      # OTel: service.name is required, service.namespace is optional; unset or empty means "no namespace", not a default one.
+      # OTel: service.namespace is optional and an unset namespace is itself a valid namespace, encoded here as the empty string.
       # service.instance.id is unique only within its (service.namespace, service.name) pair: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
       - name: "namespace"
         value: >-
           'service.namespace' in resource.attributes ?
           resource.attributes['service.namespace'] :
           ''
-      - name: "serviceUrnPrefix"
-        value: >-
-          'service.namespace' in resource.attributes &&
-          resource.attributes['service.namespace'] != '' ?
-          'urn:opentelemetry:namespace/' + resource.attributes['service.namespace'] + ':service/' :
-          'urn:opentelemetry:service/'
       - name: "service"
         value: "resource.attributes['service.name']"
       - name: "version"
@@ -35,7 +29,7 @@ nodes:
         value: "resource.attributes['k8s.cluster.name']"
     output:
       identifier: >-
-        vars.serviceUrnPrefix + vars.service
+        'urn:opentelemetry:namespace/' + vars.namespace + ':service/' + vars.service
       name: "vars.service"
       typeName: "'otel service'"
       required:

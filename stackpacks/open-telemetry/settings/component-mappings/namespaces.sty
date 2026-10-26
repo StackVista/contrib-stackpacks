@@ -9,8 +9,8 @@ nodes:
         - "METRICS"
       resource:
         action: "'CREATE'"
-        # OTel: service.namespace is optional and an empty value means the service has no namespace,
-        # so no namespace component exists for it: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
+        # OTel: service.namespace is optional; an unset or empty namespace is not a named namespace,
+        # so no namespace component is created for it: https://opentelemetry.io/docs/specs/semconv/registry/attributes/service/
         condition: "'service.namespace' in resource.attributes && resource.attributes['service.namespace'] != ''"
     vars:
       - name: "namespace"
