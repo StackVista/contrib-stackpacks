@@ -312,7 +312,7 @@ jobs:
           description: Community stackpacks distribution bundle
           component: contrib-stackpacks
           dockerfile: docker/Dockerfile
-          base-name: registry.suse.com/bci/bci-minimal:15.7-26.60
+          base-name: registry.suse.com/bci/bci-minimal:15.7-26.76
 
       - name: Push single-arch image (amd64)
         if: steps.publish.outputs.required == 'true'
