@@ -1,5 +1,5 @@
 name: "otel-k8s-crd"
-version: "0.0.12"
+version: "0.0.13"
 schemaVersion: "2.0"
 displayName: "Kubernetes Custom Resources"
 categories: [ "Kubernetes" ]
@@ -19,6 +19,7 @@ ingestion:
   cluster:
     display: "OpenTelemetry Kubernetes CRDs"
     description: "Custom resource definitions collected by the agent's resource collector."
+    values: !resource "ingestion-cluster-values.yaml"
     options:
       - name: kubewarden
         display: "Kubewarden policies"
