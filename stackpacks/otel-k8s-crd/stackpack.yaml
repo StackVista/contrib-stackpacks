@@ -1,5 +1,5 @@
 name: "otel-k8s-crd"
-version: "0.0.11"
+version: "0.0.12"
 schemaVersion: "2.0"
 displayName: "Kubernetes Custom Resources"
 categories: [ "Kubernetes" ]
@@ -19,5 +19,19 @@ ingestion:
   cluster:
     display: "OpenTelemetry Kubernetes CRDs"
     description: "Custom resource definitions collected by the agent's resource collector."
+    options:
+      - name: kubewarden
+        display: "Kubewarden policies"
+        default: true
+        values: !resource "ingestion-option-kubewarden.yaml"
+      - name: kubevirt
+        display: "KubeVirt virtual machines"
+        values: !resource "ingestion-option-kubevirt.yaml"
+      - name: gateway-api
+        display: "Gateway API"
+        values: !resource "ingestion-option-gateway-api.yaml"
+      - name: helm-controller
+        display: "Helm controller charts (helm.cattle.io)"
+        values: !resource "ingestion-option-helm-controller.yaml"
     dataTypes:
       topology: 'type = "custom resource definition" AND label = "stackpack:otel-k8s-crd"'

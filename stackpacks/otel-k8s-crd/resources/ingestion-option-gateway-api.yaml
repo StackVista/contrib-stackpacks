@@ -1,0 +1,6 @@
+otel:
+  k8sResourceCollector:
+    crDiscovery:
+      apiGroups:
+        include:
+          gateway.networking.k8s.io: true
