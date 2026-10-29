@@ -1,5 +1,5 @@
 name: "open-telemetry"
-version: "0.1.6"
+version: "0.1.7"
 schemaVersion: "2.0"
 displayName: "Open Telemetry"
 categories: [ "Open Telemetry" ]
@@ -21,15 +21,7 @@ provision:
 ingestion:
   global:
     instructions: !resource "ingestion-global.md"
-    dataTypes:
-      topology: 'label = "stackpack:open-telemetry"'
-      metrics: 'otel_span_calls_total'
-      traces: {}
   cluster:
     display: "OpenTelemetry"
     description: "Receive OTLP traces, metrics and logs from applications in the cluster through the telemetry gateway."
     values: !resource "ingestion-cluster-values.yaml"
-    dataTypes:
-      topology: 'label = "stackpack:open-telemetry"'
-      metrics: 'otel_span_calls_total'
-      traces: {}

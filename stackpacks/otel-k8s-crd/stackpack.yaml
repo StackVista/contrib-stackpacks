@@ -1,5 +1,5 @@
 name: "otel-k8s-crd"
-version: "0.0.13"
+version: "0.0.14"
 schemaVersion: "2.0"
 displayName: "Kubernetes Custom Resources"
 categories: [ "Kubernetes" ]
@@ -34,5 +34,3 @@ ingestion:
       - name: helm-controller
         display: "Helm controller charts (helm.cattle.io)"
         values: !resource "ingestion-option-helm-controller.yaml"
-    dataTypes:
-      topology: 'type = "custom resource definition" AND label = "stackpack:otel-k8s-crd"'
