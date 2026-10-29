@@ -1,5 +1,5 @@
 name: "otel-k8s-crd"
-version: "0.0.9"
+version: "0.0.14"
 schemaVersion: "2.0"
 displayName: "Kubernetes Custom Resources"
 categories: [ "Kubernetes" ]
@@ -15,3 +15,22 @@ configurationUrls:
   ERROR: !resource "error.md"
 provision:
   companionStackPacks: []
+ingestion:
+  cluster:
+    display: "OpenTelemetry Kubernetes CRDs"
+    description: "Custom resource definitions collected by the agent's resource collector."
+    values: !resource "ingestion-cluster-values.yaml"
+    options:
+      - name: kubewarden
+        display: "Kubewarden policies"
+        default: true
+        values: !resource "ingestion-option-kubewarden.yaml"
+      - name: kubevirt
+        display: "KubeVirt virtual machines"
+        values: !resource "ingestion-option-kubevirt.yaml"
+      - name: gateway-api
+        display: "Gateway API"
+        values: !resource "ingestion-option-gateway-api.yaml"
+      - name: helm-controller
+        display: "Helm controller charts (helm.cattle.io)"
+        values: !resource "ingestion-option-helm-controller.yaml"

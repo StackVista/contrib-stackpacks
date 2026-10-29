@@ -1,5 +1,5 @@
 name: "open-telemetry"
-version: "0.1.5"
+version: "0.1.7"
 schemaVersion: "2.0"
 displayName: "Open Telemetry"
 categories: [ "Open Telemetry" ]
@@ -18,3 +18,10 @@ configurationUrls:
   ERROR: !resource "configuration.md"
 provision:
   companionStackPacks: []
+ingestion:
+  global:
+    instructions: !resource "ingestion-global.md"
+  cluster:
+    display: "OpenTelemetry"
+    description: "Receive OTLP traces, metrics and logs from applications in the cluster through the telemetry gateway."
+    values: !resource "ingestion-cluster-values.yaml"

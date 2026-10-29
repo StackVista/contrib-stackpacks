@@ -1,0 +1,6 @@
+otel:
+  k8sResourceCollector:
+    crDiscovery:
+      apiGroups:
+        include:
+          policies.kubewarden.io: true
