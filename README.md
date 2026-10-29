@@ -1,10 +1,11 @@
 # contrib-stackpacks
 SUSE Observability Community Stackpacks
 
-Use the [Create a StackPack agent skill](.claude/skills/create-stackpack/SKILL.md) to
+Use the [Create a StackPack agent skill](.agents/skills/create-stackpack/SKILL.md) to
 create or extend an integration with the latest StackPack documentation, the `sts`
 CLI, and MCP queries for runtime validation.
 
-The skill is available to assistants that load `.claude/skills/` from this checkout.
-For other assistants or projects, copy the `create-stackpack` directory into their
+Codex, Antigravity, and Gemini CLI load the skill from `.agents/skills/`.
+Claude Code loads it through the `.claude/skills/create-stackpack` symlink.
+For other projects, copy the `create-stackpack` directory into your assistant's
 supported skill directory.
