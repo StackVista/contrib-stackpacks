@@ -1,0 +1,29 @@
+# Presentation: Portworx common filters.
+nodes:
+- _type: ComponentPresentation
+  name: Portworx common filters
+  description: Filters shared by the Portworx component lists
+  identifier: urn:stackpack:portworx:component-presentation:common-filters
+  binding:
+    _type: ComponentPresentationQueryBinding
+    query: label = "stackpack:portworx"
+  rank:
+    specificity: 1
+  presentation:
+    filters:
+    - filterId: px_k8s_cluster
+      displayName:
+        singular: Cluster
+        plural: Clusters
+      filter:
+        _type: TagFilter
+        tagKey: cluster-name
+      menuSection: Portworx
+    - filterId: px_cluster
+      displayName:
+        singular: Portworx cluster
+        plural: Portworx clusters
+      filter:
+        _type: TagFilter
+        tagKey: portworx.cluster
+      menuSection: Portworx

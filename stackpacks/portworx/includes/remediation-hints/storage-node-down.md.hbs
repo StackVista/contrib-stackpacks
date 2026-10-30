@@ -1,0 +1,10 @@
+### Storage node down
+For 5 minutes one or more storage nodes have reported their storage down. Volumes with replicas on those nodes run degraded or lose quorum.
+
+#### Check first
+1. [Cluster metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Health**.
+2. **Storage nodes** (on this page): which node is not OK.
+3. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl status` from any healthy node.
+
+#### Fix
+Fix the node (pod, network, disk) as described in *Storage node not OK*.

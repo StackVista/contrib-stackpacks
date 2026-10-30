@@ -1,0 +1,128 @@
+# Monitors: Portworx volumes, ported from the Portworx operator's alert rules.
+nodes:
+- _type: Monitor
+  name: Portworx - Volume almost full
+  description: More than 80% of the volume is used (Portworx alert PortworxVolumeUsageCritical).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:volume-usage-critical
+  arguments:
+    metric:
+      query: 100 * max by (k8s_cluster_name, volumename) (min_over_time(px_volume_usage_bytes{k8s_cluster_name!="", volumename!=""}[5m])) / max by (k8s_cluster_name, volumename) (px_volume_capacity_bytes{k8s_cluster_name!="", volumename!=""})
+      unit: percent
+      aliasTemplate: Used %
+    comparator: GT
+    threshold: 80.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:volume/${volumename}
+    titleTemplate: Volume used
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/volume-usage-critical.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Volume filling up
+  description: More than 70% of the volume is used (Portworx alert PortworxVolumeUsage).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:volume-usage-warning
+  arguments:
+    metric:
+      query: 100 * max by (k8s_cluster_name, volumename) (min_over_time(px_volume_usage_bytes{k8s_cluster_name!="", volumename!=""}[5m])) / max by (k8s_cluster_name, volumename) (px_volume_capacity_bytes{k8s_cluster_name!="", volumename!=""})
+      unit: percent
+      aliasTemplate: Used %
+    comparator: GT
+    threshold: 70.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:volume/${volumename}
+    titleTemplate: Volume used
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/volume-usage-warning.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Volume replication unhealthy
+  description: The volume is not in quorum, resyncing or degraded (Portworx alerts PortworxVolumeNotInQuorum, PortworxVolumeInResync and PortworxVolumeDegraded).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:volume-replication
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, volumename) ((px_volume_replication_status{k8s_cluster_name!="", volumename!=""} >= bool 1) * (px_volume_replication_status{k8s_cluster_name!="", volumename!=""} <= bool 3))
+      unit: short
+      aliasTemplate: Unhealthy (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:volume/${volumename}
+    titleTemplate: Volume replication
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/volume-replication.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Volume down
+  description: For 5 minutes Portworx has reported the volume status as down (3) or its state as error (6).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:volume-down
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, volumename) (min_over_time(((max by (k8s_cluster_name, volumename) (px_volume_status{k8s_cluster_name!="", volumename!=""}) == bool 3) + (max by (k8s_cluster_name, volumename) (px_volume_state{k8s_cluster_name!="", volumename!=""}) == bool 6) > bool 0)[5m:1m]))
+      unit: short
+      aliasTemplate: Down or error (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:volume/${volumename}
+    titleTemplate: Volume status
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/volume-down.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Volume filesystem needs inspection
+  description: The filesystem check found errors that need manual inspection (filesystem health 3). Mounts and resizes can fail.
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:volume-fs-needs-inspection
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, volumename) (px_volume_fs_health_status{k8s_cluster_name!="", volumename!=""} == bool 3)
+      unit: short
+      aliasTemplate: Needs inspection (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:volume/${volumename}
+    titleTemplate: Filesystem health
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/volume-fs-needs-inspection.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Volume filesystem has fixable errors
+  description: The filesystem check found errors that Portworx can fix (filesystem health 2).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:volume-fs-safe-to-fix
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, volumename) (px_volume_fs_health_status{k8s_cluster_name!="", volumename!=""} == bool 2)
+      unit: short
+      aliasTemplate: Fixable errors (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:volume/${volumename}
+    titleTemplate: Filesystem health
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/volume-fs-safe-to-fix.md.hbs
+  status: ENABLED

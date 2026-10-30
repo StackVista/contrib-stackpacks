@@ -1,0 +1,31 @@
+# Relation mapping: Portworx storage node -> the Portworx cluster that owns its StorageNode.
+nodes:
+  - _type: "OtelRelationMapping"
+    name: "Portworx node member of cluster"
+    description: "Links a Portworx storage node to its Portworx cluster"
+    identifier: "urn:stackpack:portworx:otel-relation-mapping:node-member-of-cluster"
+    input:
+      signal:
+        - "LOGS"
+      resource:
+        scope:
+          log:
+            action: "log.body['type'] in ['ADDED', 'MODIFIED'] ? 'CREATE' : log.body['type'] == 'DELETED' ? 'DELETE' : 'CONTINUE'"
+            condition: >-
+              log.eventName == 'KubernetesCustomResourceEvent' &&
+              log.attributes['k8s.resource.group'] == 'core.libopenstorage.org' &&
+              log.body['object']['kind'] == 'StorageNode' &&
+              'ownerReferences' in log.body['object']['metadata']
+    vars:
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+      - name: "name"
+        value: "log.attributes['k8s.object.name']"
+      - name: "pxCluster"
+        value: "log.body['object']['metadata']['ownerReferences'][0]['name']"
+    output:
+      sourceId: "'urn:portworx:/' + vars.clusterName + ':node/' + vars.name"
+      targetId: "'urn:portworx:/' + vars.clusterName + ':cluster/' + vars.pxCluster"
+      typeName: "'member of'"
+      dependencyType: "'ONE_WAY'"
+    expireAfter: 900000

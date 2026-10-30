@@ -1,0 +1,128 @@
+# Monitors: Portworx clusters, ported from the Portworx operator's alert rules.
+nodes:
+- _type: Monitor
+  name: Portworx - Storage node down
+  description: One or more storage nodes report their storage down for 5 minutes (Portworx alert PortworxStorageNodeDown).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:storage-node-down
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, cluster) (min_over_time(px_cluster_status_nodes_storage_down{k8s_cluster_name!=""}[5m]))
+      unit: short
+      aliasTemplate: Storage nodes down
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:cluster/${cluster}
+    titleTemplate: Storage nodes down
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/storage-node-down.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Cluster member down
+  description: Fewer nodes are online than the cluster size for 5 minutes (Portworx alert PortworxMemberDown).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:member-down
+  arguments:
+    metric:
+      query: min_over_time((max by (k8s_cluster_name, cluster) (px_cluster_status_size{k8s_cluster_name!=""}) - max by (k8s_cluster_name, cluster) (px_cluster_status_nodes_online{k8s_cluster_name!=""}))[5m:1m])
+      unit: short
+      aliasTemplate: Members down
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:cluster/${cluster}
+    titleTemplate: Cluster members down
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/member-down.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - Cluster quorum unhealthy
+  description: The cluster reports a quorum problem for 5 minutes (Portworx alert PortworxQuorumUnhealthy).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:quorum-unhealthy
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, cluster) (min_over_time(px_cluster_status_quorum{k8s_cluster_name!=""}[5m]))
+      unit: short
+      aliasTemplate: Quorum state
+    comparator: GT
+    threshold: 1.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:cluster/${cluster}
+    titleTemplate: Cluster quorum
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/quorum-unhealthy.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - KVDB unhealthy
+  description: The Portworx key-value database is unhealthy from the cluster's view (Portworx alert PXKvdbClusterViewUnhealthy).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:kvdb-cluster-unhealthy
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, cluster) (px_kvdb_health_state_cluster_view{k8s_cluster_name!=""} == bool 2)
+      unit: short
+      aliasTemplate: Unhealthy (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:cluster/${cluster}
+    titleTemplate: KVDB health (cluster view)
+  intervalSeconds: 60
+  remediationHint: !include remediation-hints/kvdb-cluster-unhealthy.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - License expires soon
+  description: The Portworx license expires in less than 5 days (Portworx alert PortworxLicenseExpiry).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:license-expiry
+  arguments:
+    metric:
+      query: min by (k8s_cluster_name, cluster) (px_node_status_license_expiry{k8s_cluster_name!=""})
+      unit: short
+      aliasTemplate: Days left
+    comparator: LT
+    threshold: 5.0
+    failureState: DEVIATING
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:cluster/${cluster}
+    titleTemplate: License days left
+  intervalSeconds: 3600
+  remediationHint: !include remediation-hints/license-expiry.md.hbs
+  status: ENABLED
+- _type: Monitor
+  name: Portworx - License invalid
+  description: Portworx reports an invalid license (Portworx alert PortworxLicenseInvalid).
+  tags:
+  - portworx
+  - storage
+  function: urn:stackpack:common:monitor-function:threshold
+  identifier: urn:stackpack:portworx:shared:monitor:license-invalid
+  arguments:
+    metric:
+      query: max by (k8s_cluster_name, cluster) (px_license_type{k8s_cluster_name!=""} == bool 9)
+      unit: short
+      aliasTemplate: Invalid (1 = yes)
+    comparator: GT
+    threshold: 0.0
+    failureState: CRITICAL
+    urnTemplate: urn:portworx:/${k8s_cluster_name}:cluster/${cluster}
+    titleTemplate: License state
+  intervalSeconds: 300
+  remediationHint: !include remediation-hints/license-invalid.md.hbs
+  status: ENABLED

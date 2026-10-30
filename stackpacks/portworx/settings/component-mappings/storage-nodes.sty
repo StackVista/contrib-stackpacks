@@ -1,0 +1,59 @@
+# Component mapping: Portworx StorageNode custom resource -> portworx node, merged into the Kubernetes node.
+# Ranked below the Kubernetes node so the merged component keeps its "node" type;
+# ours survives as the "source-type:portworx node" label.
+nodes:
+  - _type: "OtelComponentMapping"
+    name: "Portworx storage node"
+    description: "Adds Portworx state to the Kubernetes node that runs a Portworx StorageNode"
+    identifier: "urn:stackpack:portworx:otel-component-mapping:storage-node"
+    input:
+      signal:
+        - "LOGS"
+      resource:
+        scope:
+          log:
+            action: "log.body['type'] in ['ADDED', 'MODIFIED'] ? 'CREATE' : log.body['type'] == 'DELETED' ? 'DELETE' : 'CONTINUE'"
+            condition: >-
+              log.eventName == 'KubernetesCustomResourceEvent' &&
+              log.attributes['k8s.resource.group'] == 'core.libopenstorage.org' &&
+              log.body['object']['kind'] == 'StorageNode'
+    vars:
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+      - name: "name"
+        value: "log.attributes['k8s.object.name']"
+      - name: "namespace"
+        value: "log.attributes['k8s.namespace.name']"
+    output:
+      identifier: "'urn:portworx:/' + vars.clusterName + ':node/' + vars.name"
+      name: "vars.name"
+      typeName: "'portworx node'"
+      required:
+        additionalIdentifiers:
+          - "'urn:kubernetes:/' + vars.clusterName + ':node/' + vars.name"
+        tags:
+          - source: "'portworx'"
+            target: "stackpack"
+          - source: "vars.clusterName"
+            target: "cluster-name"
+          - source: "vars.namespace"
+            target: "portworx.namespace"
+      optional:
+        tags:
+          - source: "log.body['object']['metadata']['ownerReferences'][0]['name']"
+            target: "portworx.cluster"
+          - source: "log.body['object']['status']['phase']"
+            target: "portworx.phase"
+          - source: "log.body['object']['spec']['version']"
+            target: "portworx.version"
+          - source: "log.body['object']['status']['nodeUid']"
+            target: "portworx.node-id"
+          - source: "log.body['object']['status']['network']['dataIP']"
+            target: "portworx.data-ip"
+          - source: "string(log.body['object']['status']['nodeAttributes']['storage'])"
+            target: "portworx.storage-node"
+          - source: "string(log.body['object']['status']['nodeAttributes']['kvdb'])"
+            target: "portworx.kvdb-member"
+    expireAfter: 900000
+    rank:
+      specificity: 10

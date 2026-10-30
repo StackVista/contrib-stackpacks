@@ -1,0 +1,9 @@
+### Storage node will fill within 2 weeks
+Less than 30% of this node's pool capacity is free, and at the growth rate of the last hour it fills up within 14 days.
+
+#### Check first
+1. [Node metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Capacity**: is the growth steady or a one-off (a restore, a large copy)?
+2. [Portworx - Volumes](/#/dashboards/urn:stackpack:portworx:dashboard:volumes): which volumes grow fastest?
+
+#### Fix
+Add capacity, rebalance replicas, or clean up volumes and snapshots, as for *Storage node filling up*.
