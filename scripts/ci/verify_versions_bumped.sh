@@ -11,7 +11,7 @@ set -euo pipefail
 stackpack="$1"
 : "${TARGET_BRANCH:?TARGET_BRANCH must be set (e.g. from github.base_ref)}"
 
-git fetch origin ${TARGET_BRANCH}
+git fetch origin -- "${TARGET_BRANCH}"
 
 # Gate: skip if THIS BRANCH didn't modify stackpacks/<stackpack>/. We use the merge-base
 # (not ${TARGET_BRANCH}'s tip) because if master moves forward after this

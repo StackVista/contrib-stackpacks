@@ -1,11 +1,4 @@
-name: Contrib Stackpacks CI
-
-run-name: >-
-  contrib stackpacks -
-  ${{ github.event_name == 'pull_request' && format('PR #{0} {1}', github.event.number, github.event.pull_request.title) ||
-      github.event_name == 'workflow_dispatch' && 'manual rebuild' ||
-      github.event_name == 'push' && format('{0}: {1}', github.ref_name, github.event.head_commit.message) ||
-      github.ref_name }}
+name: Contrib StackPacks CI
 
 on:
   pull_request:
@@ -25,9 +18,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  zizmor:
+    name: Workflow security audit
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Audit workflows and actions
+        uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          advanced-security: false
+          collect: all
+          inputs: .
 
   discover-stackpacks:
-    name: Discover stackpacks
+    name: Discover StackPacks
     runs-on: ubuntu-24.04
     outputs:
       matrix: ${{ steps.discover.outputs.matrix }}
@@ -37,98 +44,89 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-
-      - name: Discover stackpack directories
+      - name: Discover StackPack directories
         id: discover
         run: |
           stackpacks=()
-          if [[ -d stackpacks ]]; then
-            for dir in stackpacks/*; do
-              [[ -d "${dir}" && -f "${dir}/stackpack.yaml" ]] || continue
-              stackpacks+=("$(basename "${dir}")")
-            done
-          fi
-
+          for dir in stackpacks/*; do
+            [[ -d "${dir}" && -f "${dir}/stackpack.yaml" ]] || continue
+            stackpack=$(basename "${dir}")
+            [[ "${stackpack}" =~ ^[a-z0-9]+(-[a-z0-9]+)*$ ]] || {
+              echo "Invalid StackPack directory name: ${stackpack}" >&2
+              exit 1
+            }
+            stackpacks+=("${stackpack}")
+          done
           if [[ ${#stackpacks[@]} -eq 0 ]]; then
             echo 'matrix={"stackpack":[]}' >> "$GITHUB_OUTPUT"
             echo 'has_stackpacks=false' >> "$GITHUB_OUTPUT"
-            echo "No stackpacks discovered"
             exit 0
           fi
-
           matrix=$(printf '%s\n' "${stackpacks[@]}" | jq -R . | jq -cs '{stackpack:.}')
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
           echo 'has_stackpacks=true' >> "$GITHUB_OUTPUT"
-          echo "Discovered stackpacks: ${stackpacks[*]}"
 
-  validate:
-    needs: [discover-stackpacks]
-    if: ${{ needs.discover-stackpacks.outputs.has_stackpacks == 'true' }}
-    name: validate (${{ matrix.stackpack }})
+  package:
+    name: Validate and package (${{ matrix.stackpack }})
+    needs: discover-stackpacks
+    if: needs.discover-stackpacks.outputs.has_stackpacks == 'true'
     runs-on: ubuntu-24.04
-    env:
-      VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:7.0.0-snapshot.20261012082244-master-05004e2-2.5@sha256:2b980e1e2948eff5892e5815ed0d4a17780b8312b1eb2831234fdf7cfacfab8c
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
+    env:
+      VALIDATOR_IMAGE: quay.io/stackstate/stackstate-server:7.0.0-snapshot.20261012082244-master-05004e2-2.5@sha256:2b980e1e2948eff5892e5815ed0d4a17780b8312b1eb2831234fdf7cfacfab8c
+      STACKPACK: ${{ matrix.stackpack }}
+      TARGET_BRANCH: ${{ github.base_ref || 'main' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-
-      - name: Validate ${{ matrix.stackpack }}
-        env:
-          STACKPACK: ${{ matrix.stackpack }}
+          fetch-depth: 0
+      - name: Install yq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends yq
+      - name: Check package identity and maintainer
+        run: |
+          definition="stackpacks/${STACKPACK}/stackpack.yaml"
+          [[ "$(yq -r '.name' "${definition}")" == "${STACKPACK}" ]]
+          version=$(yq -r '.version' "${definition}")
+          [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]
+          grep -Eq '^Maintainer: [^[:space:]].*' "stackpacks/${STACKPACK}/README.md"
+      - name: Check version bump
+        run: bash scripts/ci/verify_versions_bumped.sh "${STACKPACK}"
+      - name: Validate StackPack
         run: bash scripts/ci/validate_stackpack.sh "stackpacks/${STACKPACK}"
-
       - name: Verify validator rejects an invalid mapping expression
         run: |
           output=$(mktemp)
           if bash scripts/ci/validate_stackpack.sh tests/fixtures/invalid-component-mapping >"${output}" 2>&1; then
             cat "${output}"
-            echo "Validator accepted an invalid mapping" >&2
+            echo 'Validator accepted an invalid mapping' >&2
             exit 1
           fi
           cat "${output}"
-          grep -q "undeclared.*undeclaredValidationControl" "${output}"
-
-  package:
-    name: package (${{ matrix.stackpack }})
-    needs: [discover-stackpacks, validate]
-    if: |
-      always() &&
-      needs.validate.result == 'success'
-    runs-on: ubuntu-24.04
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-
-      - name: Install yq
+          grep -q 'undeclared.*undeclaredValidationControl' "${output}"
+      - name: Install checksum-verified StackState CLI
+        env:
+          CLI_VERSION: 3.9.5
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends yq
-
-      - name: Install StackState CLI
-        run: |
-          version=$(curl --fail --silent --show-error https://dl.stackstate.com/stackstate-cli/LATEST_VERSION)
-          version="${version#v}"
-          arch=$(uname -m)
           tmp=$(mktemp -d)
+          archive="stackstate-cli-${CLI_VERSION}.linux-x86_64.tar.gz"
+          base="https://dl.stackstate.com/stackstate-cli/v${CLI_VERSION}"
+          curl --fail --silent --show-error --location "${base}/${archive}" -o "${tmp}/${archive}"
           curl --fail --silent --show-error --location \
-            "https://dl.stackstate.com/stackstate-cli/v${version}/stackstate-cli-${version}.linux-${arch}.tar.gz" \
-            | tar xz -C "${tmp}"
+            "${base}/stackstate-cli_${CLI_VERSION}_checksums.txt" -o "${tmp}/checksums.txt"
+          awk -v archive="${archive}" '$2 == archive { print; found++ } END { if (found != 1) exit 1 }' \
+            "${tmp}/checksums.txt" > "${tmp}/archive.sha256"
+          (cd "${tmp}" && sha256sum --check --strict archive.sha256)
+          tar xzf "${tmp}/${archive}" -C "${tmp}"
           sudo install -m 0755 "${tmp}/sts" /usr/local/bin/sts
           sts version
-
-      - name: Package and publish ${{ matrix.stackpack }}
+      - name: Package StackPack
         env:
-          STACKPACK: ${{ matrix.stackpack }}
           BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
           RUN_NUMBER: ${{ github.run_number }}
           SHA: ${{ github.sha }}
@@ -136,232 +134,160 @@ jobs:
           REF: ${{ github.ref }}
         run: |
           cd "stackpacks/${STACKPACK}"
-          base_version=$(yq -r '.version' stackpack.yaml)
-          echo "Version from stackpack.yaml: ${base_version}"
-
-          if [[ "${EVENT_NAME}" == "push" && "${REF}" == "refs/heads/main" ]]; then
-            stackpack_version=${base_version}
-          else
-            major=$(echo "${base_version}" | cut -d. -f1)
-            minor=$(echo "${base_version}" | cut -d. -f2)
-            patch=$(echo "${base_version}" | cut -d. -f3)
-            new_patch=$((patch + 1))
-            branch_sanitized=${BRANCH_NAME//[^a-zA-Z0-9]/-}
-            short_sha="${SHA:0:7}"
-            stackpack_version="${major}.${minor}.${new_patch}-${branch_sanitized}-${RUN_NUMBER}-${short_sha}-SNAPSHOT"
-            sed -i "s/^version: .*/version: \"${stackpack_version}\"/" stackpack.yaml
+          version=$(yq -r '.version' stackpack.yaml)
+          if [[ "${EVENT_NAME}" != push || "${REF}" != refs/heads/main ]]; then
+            branch="${BRANCH_NAME//[^a-zA-Z0-9]/-}"
+            version="${version}-${branch}-${RUN_NUMBER}-${SHA:0:7}-SNAPSHOT"
+            sed -i "s/^version: .*/version: \"${version}\"/" stackpack.yaml
           fi
-
           export STS_EXPERIMENTAL_STACKPACKS=1
           sts stackpack package
           mkdir -p target
-          mv -- *.sts target/
-          ls -lh target/*.sts
-
-      - name: Upload ${{ matrix.stackpack }} sts artifact
+          mv -- "${STACKPACK}-${version}.sts" target/
+          printf '%s\n' "${version}" > target/version.txt
+      - name: Upload StackPack package
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: sts-${{ matrix.stackpack }}
-          path: stackpacks/${{ matrix.stackpack }}/target/*.sts
+          path: stackpacks/${{ matrix.stackpack }}/target/
           if-no-files-found: error
 
-  check-version-bump:
-    needs: [discover-stackpacks]
-    if: ${{ needs.discover-stackpacks.outputs.has_stackpacks == 'true' }}
-    name: Check version bump
+  build:
+    name: Build and Trivy secret/vulnerability scan (${{ matrix.stackpack }})
+    needs: [discover-stackpacks, package, zizmor]
+    if: needs.discover-stackpacks.outputs.has_stackpacks == 'true'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
     env:
-      TARGET_BRANCH: ${{ github.base_ref || 'main' }}
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: true
-          fetch-depth: 0
-
-      - name: Install yq
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends yq
-
-      - name: Compare versions
-        env:
-          STACKPACK: ${{ matrix.stackpack }}
-        run: ./scripts/ci/verify_versions_bumped.sh "${STACKPACK}"
-
-  build-and-push-docker-image:
-    name: Docker image build, scan, and push
-    needs: [discover-stackpacks, package]
-    if: |
-      always() && (
-        (github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.name == 'contrib-stackpacks' &&
-          github.event.pull_request.head.repo.owner.login == 'StackVista')
-        || (github.event_name =='push' &&
-          github.event.repository.name == 'contrib-stackpacks' &&
-          github.event.repository.owner.login == 'StackVista')
-      ) &&
-      needs.discover-stackpacks.outputs.has_stackpacks == 'true' &&
-      needs.package.result == 'success'
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: read
-      id-token: write
-    strategy:
-      fail-fast: false
+      STACKPACK: ${{ matrix.stackpack }}
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-
-      - name: Download stackpack artifacts
+      - name: Download this StackPack package
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          pattern: sts-*
+          name: sts-${{ matrix.stackpack }}
           path: artifacts
-          merge-multiple: true
-
-      - name: Stage stackpacks
-        run: |
-          dest=docker/rootfs/stackpacks
-          rm -rf "${dest}"
-          mkdir -p "${dest}"
-          cp artifacts/*.sts "${dest}/"
-
-      - name: Compute image tag
-        id: tag
-        run: |
-          git_branch="${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}}"
-          # Branch names may contain characters such as "/" that Docker tags reject.
-          git_branch="${git_branch//[^a-zA-Z0-9_.-]/-}"
-          git_commit_sha_short=$(git rev-parse --short=7 HEAD)
-          git_last_commit_timestamp=$(TZ=UTC0 git log -1 --format=%cd --date=format-local:'%Y%m%d%H%M%S')
-          echo "value=${git_last_commit_timestamp}-${git_branch}-${git_commit_sha_short}" >> "$GITHUB_OUTPUT"
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4.0.0
-        with:
-          image: tonistiigi/binfmt:qemu-v10.0.4
-          cache-image: false
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-
-      - name: Build local image for scan
-        id: local-image
+      - name: Build both architectures and verify package contents
         env:
-          TAG: ${{ steps.tag.outputs.value }}
+          SOURCE_URL: ${{ github.server_url }}/${{ github.repository }}
+          REVISION: ${{ github.sha }}
         run: |
-          local_ref="local/contrib-stackpacks:${TAG}"
-          docker buildx build \
-            --platform linux/amd64 \
-            --load \
-            --provenance=false \
-            --sbom=false \
-            --tag "${local_ref}" \
-            docker
-          echo "ref=${local_ref}" >> "$GITHUB_OUTPUT"
-
-      - name: Smoke test image
-        env:
-          LOCAL_IMAGE_REF: ${{ steps.local-image.outputs.ref }}
-        run: |
-          if ! docker run --rm --entrypoint /bin/sh "${LOCAL_IMAGE_REF}" -c 'set -- /stackpacks/*.sts; [ -e "$1" ]'; then
-            echo "Smoke test found no .sts files in /stackpacks" >&2
-            exit 1
-          fi
-
-      - name: Scan image
-        uses: StackVista/image-pipeline/.github/actions/scan-image@508730536961e38718dbc2403448e2d418b1136f # main
+          version=$(cat artifacts/version.txt)
+          package="${STACKPACK}-${version}.sts"
+          mkdir -p docker/rootfs/stackpacks images
+          [[ $(find artifacts -maxdepth 1 -name '*.sts' -type f | wc -l) -eq 1 ]]
+          cp "artifacts/${package}" docker/rootfs/stackpacks/
+          cp artifacts/version.txt images/
+          for arch in amd64 arm64; do
+            image="local/contrib-stackpack:${arch}"
+            docker buildx build --platform "linux/${arch}" --load \
+              --provenance=false --sbom=false --tag "${image}" \
+              --label "org.opencontainers.image.source=${SOURCE_URL}" \
+              --label "org.opencontainers.image.revision=${REVISION}" \
+              --label "org.opencontainers.image.version=${version}" docker
+            [[ "$(docker image inspect "${image}" --format '{{.Architecture}}')" == "${arch}" ]]
+            container=$(docker create --platform "linux/${arch}" --entrypoint /bin/sh "${image}" -c true)
+            tmp=$(mktemp -d)
+            docker cp "${container}:/stackpacks/." "${tmp}/"
+            docker rm "${container}"
+            [[ $(find "${tmp}" -maxdepth 1 -name '*.sts' -type f | wc -l) -eq 1 ]]
+            cmp "artifacts/${package}" "${tmp}/${package}"
+            docker save "${image}" -o "images/image-${arch}.tar"
+          done
+      - name: Trivy secret and vulnerability gate (amd64)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
         with:
-          image: ${{ steps.local-image.outputs.ref }}
-          mode: inform
-          severity: UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL
+          image: local/contrib-stackpack:amd64
+          mode: gate
           with-grype: true
           upload-sarif: false
+      - name: Trivy secret and vulnerability gate (arm64)
+        uses: StackVista/image-pipeline/.github/actions/scan-image@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        with:
+          image: local/contrib-stackpack:arm64
+          mode: gate
+          with-grype: true
+          upload-sarif: false
+      - name: Upload scanned images
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: image-${{ matrix.stackpack }}
+          path: images/
+          if-no-files-found: error
 
-      - name: Check whether image needs publication
-        id: publish
+  publish:
+    name: Publish versioned GHCR image (${{ matrix.stackpack }})
+    needs: [discover-stackpacks, package, build, zizmor]
+    if: >-
+      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
+      github.repository == 'StackVista/contrib-stackpacks' &&
+      needs.discover-stackpacks.outputs.has_stackpacks == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
+    env:
+      STACKPACK: ${{ matrix.stackpack }}
+    steps:
+      - name: Download scanned images
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: image-${{ matrix.stackpack }}
+          path: images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
+      - name: Log in to GHCR
         env:
-          IMAGE_REF: quay.io/stackstate/contrib-stackpacks:${{ steps.tag.outputs.value }}
+          REGISTRY_USER: ${{ github.actor }}
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: printf '%s' "${REGISTRY_TOKEN}" | docker login ghcr.io --username "${REGISTRY_USER}" --password-stdin
+      - name: Check whether this version needs publication
+        id: release
         run: |
+          image="ghcr.io/stackvista/contrib-stackpacks/${STACKPACK}"
+          version=$(cat images/version.txt)
+          [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
           error=$(mktemp)
-          trap 'rm -f "${error}"' EXIT
-          if docker buildx imagetools inspect "${IMAGE_REF}" >/dev/null 2>"${error}"; then
-            echo 'required=false' >> "${GITHUB_OUTPUT}"
-            echo "::notice::Image ${IMAGE_REF} is already published"
-          elif grep -Eq '(^|: )(not found|manifest unknown)(:|$)' "${error}"; then
-            echo 'required=true' >> "${GITHUB_OUTPUT}"
+          if docker buildx imagetools inspect "${image}:${version}" >/dev/null 2>"${error}"; then
+            echo 'required=false' >> "$GITHUB_OUTPUT"
+          elif grep -Eq '(not found|manifest unknown)' "${error}"; then
+            echo 'required=true' >> "$GITHUB_OUTPUT"
           else
             cat "${error}" >&2
             exit 1
           fi
-
-      - name: Apply OCI labels
-        if: steps.publish.outputs.required == 'true'
-        id: oci-labels
-        uses: StackVista/image-pipeline/.github/actions/apply-oci-labels@f7e766e074b516bb754891a240e6ab2df1e60e4c
+      - name: Publish and sign the scanned images
+        if: steps.release.outputs.required == 'true'
+        uses: StackVista/image-pipeline/.github/actions/scan-sign-push@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
         with:
-          image-name: contrib-stackpacks
-          tag: ${{ steps.tag.outputs.value }}
-          title: SUSE Observability Community Stackpacks
-          description: Community stackpacks distribution bundle
-          component: contrib-stackpacks
-          dockerfile: docker/Dockerfile
-          base-name: registry.suse.com/bci/bci-minimal:15.7-26.76
-
-      - name: Push single-arch image (amd64)
-        if: steps.publish.outputs.required == 'true'
-        uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
-        with:
-          image: quay.io/stackstate/contrib-stackpacks
-          tag: ${{ steps.tag.outputs.value }}
-          arch: amd64
-          docker-context: docker
-          dockerfile: docker/Dockerfile
-          labels: ${{ steps.oci-labels.outputs.labels }}
-          target-registry: quay.io
-          target-registry-user: ${{ secrets.QUAY_USER }}
-          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
-
-      - name: Push single-arch image (arm64)
-        if: steps.publish.outputs.required == 'true'
-        uses: StackVista/image-pipeline/.github/actions/push-single-arch@f7e766e074b516bb754891a240e6ab2df1e60e4c
-        with:
-          image: quay.io/stackstate/contrib-stackpacks
-          tag: ${{ steps.tag.outputs.value }}
-          arch: arm64
-          docker-context: docker
-          dockerfile: docker/Dockerfile
-          labels: ${{ steps.oci-labels.outputs.labels }}
-          target-registry: quay.io
-          target-registry-user: ${{ secrets.QUAY_USER }}
-          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
-
-      - name: Merge multi-arch manifest
-        if: steps.publish.outputs.required == 'true'
-        uses: StackVista/image-pipeline/.github/actions/merge-multiarch@f7e766e074b516bb754891a240e6ab2df1e60e4c
-        with:
-          image: quay.io/stackstate/contrib-stackpacks
-          tag: ${{ steps.tag.outputs.value }}
+          image: ${{ steps.release.outputs.image }}
+          tags: ${{ steps.release.outputs.version }}
           arches: amd64,arm64
-          target-registry: quay.io
-          target-registry-user: ${{ secrets.QUAY_USER }}
-          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
-
-  update-stackpacks-version-in-helm:
-    name: Update stackpacks version in helm-charts-internal
-    needs:
-      - build-and-push-docker-image
-    if: |
-      always() &&
-      github.event_name == 'push' && github.ref == 'refs/heads/main' &&
-      needs.build-and-push-docker-image.result == 'success'
-    uses: ./.github/workflows/update-stackpacks-version-in-helm.yml
-    secrets:
-      HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_CLIENT_ID }}
-      HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY: ${{ secrets.HELM_CHARTS_INTERNAL_GH_APP_PRIVATE_KEY }}
+          tarball-dir: images
+          target-registry: ghcr.io
+          target-registry-user: ${{ github.actor }}
+          target-registry-password: ${{ github.token }}
+          upload-sarif: false
+      - name: Verify anonymous image access
+        env:
+          IMAGE: ${{ steps.release.outputs.image }}
+          VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          anonymous_config=$(mktemp -d)
+          if ! DOCKER_CONFIG="${anonymous_config}" docker buildx imagetools inspect "${IMAGE}:${VERSION}"; then
+            echo 'Make this GHCR package public in its package settings, then rerun this job.' >&2
+            exit 1
+          fi

@@ -1,3 +1,0 @@
-## Provisioning...
-
-Provisioning Open Telemetry monitoring. Please wait a moment. You can already start configuring your application for [Open Telemetry observability](https://l.stackstate.com/open-telemetry-setup).
