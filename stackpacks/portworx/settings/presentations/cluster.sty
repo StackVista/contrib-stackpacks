@@ -1,0 +1,382 @@
+# Presentation: Portworx cluster.
+nodes:
+- _type: ComponentPresentation
+  name: Portworx cluster
+  description: How a Portworx cluster is shown
+  identifier: urn:stackpack:portworx:component-presentation:cluster
+  binding:
+    _type: ComponentPresentationQueryBinding
+    query: label = "stackpack:portworx" AND label = "source-type:portworx cluster"
+  rank:
+    specificity: 210
+  presentation:
+    icon: !icon cluster.svg
+    filters:
+    - filterId: px_k8s_cluster
+    overview:
+      name:
+        singular: Portworx cluster
+        plural: Portworx clusters
+        title: Clusters
+      mainMenu:
+        group: Portworx
+        order: 30
+      columns:
+      - columnId: health
+        title: Health
+        projection:
+          _type: HealthProjection
+          value: healthState
+      - columnId: name
+        title: Name
+        projection:
+          _type: ComponentLinkProjection
+          name: name
+          identifier: identifiers[0]
+      - columnId: k8s_cluster
+        title: Kubernetes cluster
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('cluster-name')
+      - columnId: version
+        title: Version
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('portworx.version')
+      - columnId: phase
+        title: Phase
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('portworx.phase')
+      - columnId: capacity_used
+        title: Capacity used
+        projection:
+          _type: MetricProjection
+          sparkline: true
+          decimalPlaces: 0
+          unit: percentunit
+          query: sum by (k8s_cluster_name, cluster) (px_cluster_disk_utilized_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}) / sum by (k8s_cluster_name, cluster) (px_cluster_disk_total_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+          metricId: px-cluster-capacity-usage
+      - columnId: nodes_online
+        title: Nodes online
+        projection:
+          _type: MetricProjection
+          sparkline: true
+          decimalPlaces: 0
+          unit: short
+          query: max by (k8s_cluster_name, cluster) (px_cluster_status_nodes_online{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+          metricId: px-cluster-nodes
+      sort:
+      - columnId: health
+      - columnId: name
+    highlight:
+      title: Portworx cluster
+      fields:
+      - fieldId: k8s_cluster
+        title: Kubernetes cluster
+        order: 100.0
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('cluster-name')
+      - fieldId: namespace
+        title: Namespace
+        order: 90.0
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('namespace')
+      - fieldId: version
+        title: Version
+        order: 80.0
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('portworx.version')
+      - fieldId: phase
+        title: Phase
+        order: 70.0
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('portworx.phase')
+      - fieldId: uid
+        title: Cluster UID
+        order: 60.0
+        projection:
+          _type: TextProjection
+          value: tags.singleValue('portworx.cluster-uid')
+      - fieldId: age
+        title: Age
+        order: 50.0
+        projection:
+          _type: DurationProjection
+          startTime: tags.singleValue('k8s.creationTimestamp')
+      - fieldId: labels
+        title: Labels
+        order: 10.0
+        projection:
+          _type: TagProjection
+      provisioning:
+        topologySourceSelector: source.mapping.identifier == 'urn:stackpack:portworx:otel-component-mapping:cluster'
+        showConfiguration: true
+        showStatus: true
+      relatedResources:
+      - resourceId: storage_nodes
+        title: Storage nodes
+        order: 1.0
+        topologyQuery: (withNeighborsOf(direction = "up", components = (identifier = "${identifiers[0]}"), levels = "1")) and label = "source-type:portworx node"
+        presentationIdentifier: urn:stackpack:portworx:component-presentation:storage-node
+      - resourceId: volumes
+        title: Volumes
+        order: 2.0
+        topologyQuery: (withNeighborsOf(direction = "up", components = (identifier = "${identifiers[0]}"), levels = "1")) and label = "source-type:portworx volume"
+        presentationIdentifier: urn:stackpack:portworx:component-presentation:volume
+      events:
+        showEvents: true
+        relatedResourcesQuery: identifier = "${identifiers[0]}"
+      metrics:
+      - sectionId: capacity
+        title: Capacity
+        order: 100
+        metrics:
+        - metricId: px-cluster-capacity-usage
+          order: 100
+        - metricId: px-cluster-capacity
+          order: 90
+      - sectionId: health
+        title: Health
+        order: 90
+        metrics:
+        - metricId: px-cluster-nodes
+          order: 100
+        - metricId: px-cluster-quorum
+          order: 90
+    summary:
+      metrics:
+      - summaryMetricId: px_cluster_capacity_usage_summary
+        name: Capacity used
+        order: 100
+        decimalPlaces: 0
+        unit: percentunit
+        query: sum by (k8s_cluster_name, cluster) (px_cluster_disk_utilized_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}) / sum by (k8s_cluster_name, cluster) (px_cluster_disk_total_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+        metricId: px-cluster-capacity-usage
+      - summaryMetricId: px_cluster_nodes_summary
+        name: Nodes online
+        order: 90
+        decimalPlaces: 2
+        unit: short
+        query: max by (k8s_cluster_name, cluster) (px_cluster_status_nodes_online{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+        metricId: px-cluster-nodes
+    metricPerspective:
+      tabs:
+      - tabId: portworx
+        title: Portworx
+        order: 50
+        sections:
+        - sectionId: capacity
+          title: Capacity
+          order: 100
+          metrics:
+          - metricId: px-cluster-capacity-usage
+          - metricId: px-cluster-capacity
+          - metricId: px-cluster-provisioned
+          - metricId: px-cluster-volumes
+        - sectionId: health
+          title: Health
+          order: 90
+          metrics:
+          - metricId: px-cluster-nodes
+          - metricId: px-cluster-quorum
+          - metricId: px-cluster-kvdb
+          - metricId: px-cluster-license
+        - sectionId: performance
+          title: Performance
+          order: 80
+          metrics:
+          - metricId: px-cluster-throughput
+          - metricId: px-cluster-iops
+          - metricId: px-cluster-latency
+          - metricId: px-cluster-pending-io
+        - sectionId: resources
+          title: Resources
+          order: 70
+          metrics:
+          - metricId: px-cluster-cpu
+          - metricId: px-cluster-memory
+  metrics:
+  - metricId: px-cluster-capacity-usage
+    name: Storage capacity used
+    description: Share of the raw pool capacity of all storage nodes that is in use.
+    metricQueries:
+    - expression: sum(px_cluster_disk_utilized_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}) / sum(px_cluster_disk_total_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Used
+    chart:
+      _type: GaugeChart
+      unit: percentunit
+      decimalPlaces: 0
+      max: 1
+      calculation: last
+      thresholds:
+        defaultColor: '#33A02C'
+        steps:
+        - color: '#E31A1C'
+          value: 0.8
+        - color: '#FF7F00'
+          value: 0.7
+        mode: absolute
+  - metricId: px-cluster-capacity
+    name: Storage capacity
+    description: Used and total raw pool capacity across all storage nodes.
+    metricQueries:
+    - expression: sum(px_cluster_disk_utilized_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Used
+    - expression: sum(px_cluster_disk_total_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Total
+    chart:
+      _type: TimeSeriesChart
+      unit: bytes(IEC)
+  - metricId: px-cluster-provisioned
+    name: Provisioned volume capacity
+    description: Sum of the sizes of all Portworx volumes, compared with the raw capacity. Volumes are thin provisioned and each replica uses raw capacity.
+    metricQueries:
+    - expression: sum(max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}))
+      alias: Provisioned
+    - expression: sum(px_cluster_disk_total_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Raw capacity
+    chart:
+      _type: TimeSeriesChart
+      unit: bytes(IEC)
+  - metricId: px-cluster-nodes
+    name: Nodes
+    description: Cluster members online and offline, and storage nodes whose storage is down.
+    metricQueries:
+    - expression: max(px_cluster_status_nodes_online{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Online
+    - expression: max(px_cluster_status_nodes_offline{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Offline
+    - expression: max(px_cluster_status_nodes_storage_down{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Storage down
+    chart:
+      _type: TimeSeriesChart
+      unit: short
+  - metricId: px-cluster-quorum
+    name: Quorum
+    description: 'Cluster quorum state as reported by Portworx: 1 means the cluster has quorum.'
+    metricQueries:
+    - expression: max(px_cluster_status_quorum{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Quorum
+    chart:
+      _type: StatChart
+      unit: short
+      decimals: 0
+      calculation: last
+      sparkline: true
+      thresholds:
+        defaultColor: '#33A02C'
+        steps:
+        - color: '#E31A1C'
+          value: 2
+  - metricId: px-cluster-volumes
+    name: Volumes
+    description: Number of Portworx volumes, how many are attached, and deleted volumes still in the trashcan (they keep using pool capacity).
+    metricQueries:
+    - expression: count(max by (volumeid) (px_volume_capacity_bytes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}))
+      alias: Volumes
+    - expression: count(max by (volumeid) (px_volume_attached{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}) > 0)
+      alias: Attached
+    - expression: max(px_cluster_trashcan_volumes{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: In trashcan
+    chart:
+      _type: TimeSeriesChart
+      unit: short
+  - metricId: px-cluster-throughput
+    name: Volume throughput
+    description: Read and write throughput of all Portworx volumes.
+    metricQueries:
+    - expression: sum(max by (volumeid) (px_volume_readthroughput{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}))
+      alias: Read
+    - expression: sum(max by (volumeid) (px_volume_writethroughput{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}))
+      alias: Write
+    chart:
+      _type: TimeSeriesChart
+      unit: bytes/sec(IEC)
+  - metricId: px-cluster-iops
+    name: Volume IOPS
+    description: Read and write operations per second of all Portworx volumes.
+    metricQueries:
+    - expression: sum(max by (volumeid) (rate(px_volume_reads_total{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}[${__rate_interval}])))
+      alias: Read
+    - expression: sum(max by (volumeid) (rate(px_volume_writes_total{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"}[${__rate_interval}])))
+      alias: Write
+    chart:
+      _type: TimeSeriesChart
+      unit: ops/sec
+  - metricId: px-cluster-latency
+    name: I/O latency per node
+    description: Average read and write latency of the I/O each node coordinates.
+    metricQueries:
+    - expression: max by (k8s_cluster_name, node) (px_node_stats_read_latency_seconds{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}", coordinator="1"})
+      alias: read ${node}
+      componentIdentifierTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    - expression: max by (k8s_cluster_name, node) (px_node_stats_write_latency_seconds{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}", coordinator="1"})
+      alias: write ${node}
+      componentIdentifierTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    chart:
+      _type: TimeSeriesChart
+      unit: s
+  - metricId: px-cluster-cpu
+    name: Portworx CPU per node
+    description: CPU used on each node, as reported by Portworx.
+    metricQueries:
+    - expression: max by (k8s_cluster_name, node) (px_cluster_cpu_percent{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: ${node}
+      componentIdentifierTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    chart:
+      _type: TimeSeriesChart
+      unit: percent
+  - metricId: px-cluster-memory
+    name: Memory per node
+    description: Memory used on each node, as reported by Portworx.
+    metricQueries:
+    - expression: max by (k8s_cluster_name, node) (px_cluster_memory_utilized_percent{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: ${node}
+      componentIdentifierTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    chart:
+      _type: TimeSeriesChart
+      unit: percent
+  - metricId: px-cluster-pending-io
+    name: Pending I/O per node
+    description: I/O operations waiting in Portworx on each node.
+    metricQueries:
+    - expression: max by (k8s_cluster_name, node) (px_cluster_pendingio{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: ${node}
+      componentIdentifierTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    chart:
+      _type: TimeSeriesChart
+      unit: short
+  - metricId: px-cluster-kvdb
+    name: KVDB health per node
+    description: 'Each node''s view of the Portworx key-value database: 1 healthy, 2 unhealthy.'
+    metricQueries:
+    - expression: max by (k8s_cluster_name, node) (px_kvdb_health_state_node_view{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: ${node}
+      componentIdentifierTemplate: urn:portworx:/${k8s_cluster_name}:node/${node}
+    chart:
+      _type: TimeSeriesChart
+      unit: short
+  - metricId: px-cluster-license
+    name: License days left
+    description: Days until the Portworx license expires (lowest value reported by any node).
+    metricQueries:
+    - expression: min(px_node_status_license_expiry{k8s_cluster_name="${tags.singleValue('cluster-name')}", cluster="${name}"})
+      alias: Days
+    chart:
+      _type: StatChart
+      unit: short
+      decimals: 0
+      calculation: last
+      sparkline: true
+      thresholds:
+        defaultColor: '#E31A1C'
+        steps:
+        - color: '#FF7F00'
+          value: 5
+        - color: '#33A02C'
+          value: 30

@@ -1,0 +1,29 @@
+# Relation mapping: Portworx volume -> the Portworx cluster that provides it.
+nodes:
+  - _type: "OtelRelationMapping"
+    name: "Portworx volume provided by cluster"
+    description: "Links a Portworx volume to its Portworx cluster"
+    identifier: "urn:stackpack:portworx:otel-relation-mapping:volume-provided-by-cluster"
+    input:
+      signal:
+        - "METRICS"
+      resource:
+        condition: "'k8s.cluster.name' in resource.attributes"
+        scope:
+          metric:
+            condition: "metric.name == 'px_volume_replication_status'"
+            datapoint:
+              action: "'CREATE'"
+              condition: >-
+                'volumename' in datapoint.attributes &&
+                'cluster' in datapoint.attributes &&
+                datapoint.attributes['volumename'] != ''
+    vars:
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+    output:
+      sourceId: "'urn:portworx:/' + vars.clusterName + ':volume/' + datapoint.attributes['volumename']"
+      targetId: "'urn:portworx:/' + vars.clusterName + ':cluster/' + datapoint.attributes['cluster']"
+      typeName: "'provided by'"
+      dependencyType: "'ONE_WAY'"
+    expireAfter: 900000

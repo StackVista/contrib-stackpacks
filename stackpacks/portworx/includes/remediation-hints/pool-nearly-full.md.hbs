@@ -1,0 +1,12 @@
+### Storage pool nearly full
+One pool on this node is close to the point where Portworx marks it **full**: free space below 10% of the pool or 100 GiB, whichever is smaller. A full pool puts the node in StorageDown and its volumes become read-only. This can happen on one pool while the node's total capacity looks fine.
+
+#### Check first
+1. [Node metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Pool usage**.
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool show` on the node.
+3. [Portworx - Cluster overview](/#/dashboards/urn:stackpack:portworx:dashboard:cluster-overview) → **Volumes in trashcan**: deleted volumes in the trashcan still use pool space.
+
+#### Fix
+1. Expand the pool (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool expand`) or add drives.
+2. Move replicas to other pools or nodes (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool rebalance`, or `volume ha-update`).
+3. Empty the trashcan and delete unused volumes and snapshots.

@@ -1,0 +1,9 @@
+### KVDB unhealthy
+The cluster sees the Portworx key-value database as unhealthy. Volume operations (create, attach, failover) fail until it recovers.
+
+#### Check first
+1. [Portworx - Cluster overview](/#/dashboards/urn:stackpack:portworx:dashboard:cluster-overview) → **KVDB health per node** and **KVDB watch latency**.
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service kvdb members`: are all members healthy and is there a leader?
+
+#### Fix
+Restore the failed KVDB member or its disk, or the network between members.

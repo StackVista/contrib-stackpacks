@@ -1,0 +1,18 @@
+### Volume replication unhealthy
+Portworx reports the volume as **not in quorum** (1), **resyncing** (2) or **degraded** (3). The **Replication status** chart shows which.
+
+- *Not in quorum*: too few replicas are reachable; I/O to the volume stops until quorum returns.
+- *Resync*: a replica is catching up after a node came back. It runs on its own.
+- *Degraded*: a replica is missing and the volume runs with fewer copies.
+
+#### Check first
+1. [Volume metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Replication**: status code, configured vs current replicas.
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume inspect <volume>`: the replica sets and the nodes that hold them.
+3. Portworx → **Storage nodes**: is a node that holds a replica offline or not OK?
+
+#### Fix
+1. Bring the missing node back. Portworx resyncs the replica by itself.
+2. If the node is gone for good, move the replica: `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume ha-update --repl <n> --node <new-node> <volume>`, then remove the dead node from the cluster.
+
+#### Verify
+Status returns to 0 (up) and the current replicas match the configured ones.

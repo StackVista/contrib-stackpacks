@@ -1,0 +1,10 @@
+### Volume down
+For 5 minutes Portworx has reported the volume status as **down** or its state as **error**. The workload can't use the volume.
+
+#### Check first
+1. [Volume metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Replication**.
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume inspect <volume>`: state, replica sets, and the nodes that hold them.
+3. Portworx → **Storage nodes**: are the nodes holding its replicas online?
+
+#### Fix
+Bring back the nodes or pools that hold the volume's replicas. If a replica is lost for good, add a new one with `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume ha-update --repl <n> --node <node> <volume>`.

@@ -1,0 +1,14 @@
+### Volume almost full
+More than **{{ threshold }}%** of the volume is used. When it fills up, writes from the workload fail.
+
+#### Check first
+1. [Volume metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab: used bytes against the size, and how fast it grows.
+2. [Portworx - Volumes](/#/dashboards/urn:stackpack:portworx:dashboard:volumes): is it only this volume or many?
+
+#### Fix
+1. Expand the volume: raise the PVC's `spec.resources.requests.storage` (the StorageClass needs `allowVolumeExpansion: true`), or `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume update --size <GiB> <volume>`.
+2. Or free space inside the workload (old data, logs, snapshots kept by the application).
+3. To expand automatically, add a Portworx Autopilot rule for this PVC.
+
+#### Verify
+The used share drops below the threshold.
