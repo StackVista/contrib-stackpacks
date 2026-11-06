@@ -202,14 +202,14 @@ jobs:
             docker save "${image}" -o "images/image-${arch}.tar"
           done
       - name: Trivy secret and vulnerability gate (amd64)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/scan-image@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: local/contrib-stackpack:amd64
           mode: gate
           with-grype: true
           upload-sarif: false
       - name: Trivy secret and vulnerability gate (arm64)
-        uses: StackVista/image-pipeline/.github/actions/scan-image@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/scan-image@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: local/contrib-stackpack:arm64
           mode: gate
@@ -271,7 +271,7 @@ jobs:
           fi
       - name: Publish and sign the scanned images
         if: steps.release.outputs.required == 'true'
-        uses: StackVista/image-pipeline/.github/actions/scan-sign-push@6869879307d976158fa07ee5bff27ceb8eb031af # v1.0.0
+        uses: StackVista/image-pipeline/.github/actions/scan-sign-push@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: ${{ steps.release.outputs.image }}
           tags: ${{ steps.release.outputs.version }}
