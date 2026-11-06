@@ -16,7 +16,8 @@ production readiness. This follows the
    instructions, and how to remove the integration.
 3. Add the package definition, settings, resources and any icons or includes.
    Use a `major.minor.patch` version, optionally followed by a prerelease suffix.
-   Image tags use this version, so build metadata with `+` is not accepted.
+   Image tags combine the StackPack name and this version, so build metadata
+   with `+` is not accepted.
 4. Increase the version when changing an existing StackPack. Published version
    tags are immutable.
 5. Package and validate locally, then open a pull request. CI checks the

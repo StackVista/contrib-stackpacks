@@ -17,9 +17,9 @@ does not provide a support commitment or a production-readiness guarantee.
 ## Add a StackPack image
 
 Each StackPack has its own container image:
-`ghcr.io/stackvista/contrib-stackpacks/<name>:<version>`. The tag matches the
-version in its `stackpack.yaml`. Images contain one `.sts` package in `/stackpacks`
-and support AMD64 and ARM64.
+`quay.io/stackstate/contrib-stackpacks:<name>-<version>`. The tag combines the
+StackPack name and version in its `stackpack.yaml`. Images contain one `.sts`
+package in `/stackpacks` and support AMD64 and ARM64.
 
 Add the image to your SUSE Observability Helm values. Replace the example name
 and version with a published StackPack:
@@ -29,9 +29,9 @@ stackstate:
   stackpacks:
     extraImages:
       - name: my-integration
-        registry: ghcr.io
-        repository: stackvista/contrib-stackpacks/my-integration
-        tag: "0.0.1"
+        registry: quay.io
+        repository: stackstate/contrib-stackpacks
+        tag: "my-integration-0.0.1"
         pullPolicy: IfNotPresent
 ```
 
@@ -81,15 +81,12 @@ Antigravity and Gemini CLI load it from `.agents/skills/`; Claude Code loads the
 ## Publish public images
 
 CI validates and packages contributions from forks without publication
-credentials. Main-branch pushes build, scan and sign one image per StackPack with
-the repository's `GITHUB_TOKEN`. Version tags are never overwritten.
+credentials. Main-branch pushes build, scan and sign one image per StackPack in
+the existing public Quay repository using its dedicated `QUAY_USER` and
+`QUAY_PASSWORD` credentials. Tags combine the StackPack name and package version
+and are never overwritten. The workflow checks image access without credentials
+after publication; a rerun reuses an existing version.
 
-GitHub creates new GHCR packages with private visibility. After a StackPack's
-first publication, a package administrator must open its **Package settings**
-and change visibility to **Public**. The workflow checks image access without
-credentials and fails until this is done. Rerun the failed publication job after
-changing visibility; an existing version is reused.
-
-The image's source label connects the package to this repository. Before
+The image's source label connects the image to this repository. Before
 announcing a StackPack, verify that both architecture images can be pulled
 without credentials.

@@ -223,7 +223,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    name: Publish versioned GHCR image (${{ matrix.stackpack }})
+    name: Publish versioned Quay image (${{ matrix.stackpack }})
     needs: [discover-stackpacks, package, build, zizmor]
     if: >-
       github.event_name == 'push' && github.ref == 'refs/heads/main' &&
@@ -232,10 +232,10 @@ jobs:
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-      packages: write
       id-token: write
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix: ${{ fromJSON(needs.discover-stackpacks.outputs.matrix) }}
     env:
       STACKPACK: ${{ matrix.stackpack }}
@@ -247,21 +247,23 @@ jobs:
           path: images
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # v4.0.0
-      - name: Log in to GHCR
+      - name: Log in to Quay
         env:
-          REGISTRY_USER: ${{ github.actor }}
-          REGISTRY_TOKEN: ${{ github.token }}
-        run: printf '%s' "${REGISTRY_TOKEN}" | docker login ghcr.io --username "${REGISTRY_USER}" --password-stdin
+          REGISTRY_USER: ${{ secrets.QUAY_USER }}
+          REGISTRY_TOKEN: ${{ secrets.QUAY_PASSWORD }}
+        run: printf '%s' "${REGISTRY_TOKEN}" | docker login quay.io --username "${REGISTRY_USER}" --password-stdin
       - name: Check whether this version needs publication
         id: release
         run: |
-          image="ghcr.io/stackvista/contrib-stackpacks/${STACKPACK}"
+          image="quay.io/stackstate/contrib-stackpacks"
           version=$(cat images/version.txt)
           [[ "${version}" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?$ ]]
+          tag="${STACKPACK}-${version}"
+          [[ ${#tag} -le 128 ]]
           echo "image=${image}" >> "$GITHUB_OUTPUT"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
           error=$(mktemp)
-          if docker buildx imagetools inspect "${image}:${version}" >/dev/null 2>"${error}"; then
+          if docker buildx imagetools inspect "${image}:${tag}" >/dev/null 2>"${error}"; then
             echo 'required=false' >> "$GITHUB_OUTPUT"
           elif grep -Eq '(not found|manifest unknown)' "${error}"; then
             echo 'required=true' >> "$GITHUB_OUTPUT"
@@ -274,20 +276,20 @@ jobs:
         uses: StackVista/image-pipeline/.github/actions/scan-sign-push@79dd6718168651ffc846eed98c3c0cb646eb15a0 # v1.0.1
         with:
           image: ${{ steps.release.outputs.image }}
-          tags: ${{ steps.release.outputs.version }}
+          tags: ${{ steps.release.outputs.tag }}
           arches: amd64,arm64
           tarball-dir: images
-          target-registry: ghcr.io
-          target-registry-user: ${{ github.actor }}
-          target-registry-password: ${{ github.token }}
+          target-registry: quay.io
+          target-registry-user: ${{ secrets.QUAY_USER }}
+          target-registry-password: ${{ secrets.QUAY_PASSWORD }}
           upload-sarif: false
       - name: Verify anonymous image access
         env:
           IMAGE: ${{ steps.release.outputs.image }}
-          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
         run: |
           anonymous_config=$(mktemp -d)
-          if ! DOCKER_CONFIG="${anonymous_config}" docker buildx imagetools inspect "${IMAGE}:${VERSION}"; then
-            echo 'Make this GHCR package public in its package settings, then rerun this job.' >&2
+          if ! DOCKER_CONFIG="${anonymous_config}" docker buildx imagetools inspect "${IMAGE}:${TAG}"; then
+            echo "Published Quay image is not anonymously accessible: ${IMAGE}:${TAG}" >&2
             exit 1
           fi
