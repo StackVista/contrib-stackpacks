@@ -1,8 +1,7 @@
 Check the endpoint **{{ labels.endpoint }}** from the Blackbox Exporter's network.
 
 1. Inspect `probe_http_status_code` and the exporter's probe output. With
-   `http_2xx`, the final response must be 2xx. With `http_available`, responses
-   below 400 are accepted without following redirects.
+   `http_2xx`, the final response after redirects must be 2xx.
 2. If no response was received, check DNS, routing, network policies, timeouts and
    the endpoint's workload.
 3. For HTTPS, check the certificate chain, hostname and validity. Expired or

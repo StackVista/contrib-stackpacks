@@ -14,9 +14,8 @@ under one service. Open **Service Availability → Services** to see their combi
 availability and navigate to the individual endpoints.
 
 The Probe example uses `http_2xx`: it follows redirects and requires a final 2xx
-response. An optional `http_available` module accepts responses below 400 without
-following redirects. Availability follows the selected module's rules;
-connection failures and invalid or expired TLS certificates fail both modules.
+response. Connection failures and invalid or expired TLS certificates also fail
+the availability check.
 
 The exporter and Probe resources are installed separately. Topology is created
 directly from metrics; no Kubernetes or OpenTelemetry StackPack installation is
