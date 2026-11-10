@@ -1,5 +1,9 @@
 # Portworx StackPack
 
+Maintainer: @abonillabeeche
+
+**Experimental, community-maintained.** This is a third-party StackPack: the maintainer above owns support and updates, not SUSE. Report issues and compatibility problems against this repository.
+
 Monitors Portworx Enterprise 3.x on Kubernetes. User-facing setup is in `resources/configuration.md`.
 
 ## Data path
@@ -21,8 +25,18 @@ Monitors Portworx Enterprise 3.x on Kubernetes. User-facing setup is in `resourc
 - Volume metrics are reported by every node that holds a replica, and some of those series carry only `volumeid`, so volume queries use `max by` and `volumename!=""`.
 - `px_volume_reads_total` / `px_volume_writes_total` carry only `volumeid`. Per-volume IOPS use the `px_volume_read_iops` / `px_volume_write_iops` gauges.
 - Volume performance metrics only exist while a volume is attached.
+- "Volume down" alerts on `px_volume_status == 3` or `px_volume_state == 6`. The query does not assume Portworx reports both metrics for every volume: either one alone is enough to alert, so a volume missing one of the two still has its failure caught by the other.
 - A volume with no matching Kubernetes PV stays a standalone `portworx volume` component. On the test cluster, one Portworx node kept exporting series for two deleted volumes, so they showed up this way until the series stopped.
+
+## Required permissions
+
+- Creating the `ServiceMonitor` needs `create`/`get`/`list` on `servicemonitors.monitoring.coreos.com` in the namespace where Portworx runs.
+- Adding `core.libopenstorage.org` to the agent's resource collector needs permission to change the `suse-observability-agent` Helm release's values (or the Fleet bundle, Rancher app or Harvester add-on that manages it), plus the agent's existing RBAC already covers reading `StorageCluster`/`StorageNode` once that API group is included.
+
+## Removing the integration
+
+Uninstalling the StackPack stops Portworx data from being processed, but it does not remove what you added for it: delete the `so-agent-portworx` ServiceMonitor and drop `core.libopenstorage.org` from the agent's `crDiscovery.apiGroups.include` if you no longer need them.
 
 ## Tested with
 
-Portworx 3.7.1 (operator-installed, internal KVDB) on a 3-node RKE2 / SUSE Virtualization cluster, with agent chart 1.6.12.
+Portworx 3.7.1 (operator-installed, internal KVDB) on a 3-node RKE2 / SUSE Virtualization cluster, with agent chart 1.6.12, against SUSE Observability platform version 2.12.0.

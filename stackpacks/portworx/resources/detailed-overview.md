@@ -1,5 +1,7 @@
 ## Portworx StackPack
 
+**Experimental, community-maintained.** This StackPack is contributed and supported by its community maintainer, not by SUSE. See the StackPack's README for maintainer contact, tested versions and removal steps.
+
 The Portworx StackPack shows your Portworx clusters, storage nodes and volumes in SUSE Observability and tracks their health with monitors ported from the Portworx operator's alert rules.
 
 ### What you get

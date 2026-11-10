@@ -65,7 +65,7 @@ nodes:
   status: ENABLED
 - _type: Monitor
   name: Portworx - Volume down
-  description: For 5 minutes Portworx has reported the volume status as down (3) or its state as error (6).
+  description: For 5 minutes Portworx has reported the volume status as down (3) or its state as error (6). Either metric alone is enough to alert; they are not required to be reported together.
   tags:
   - portworx
   - storage
@@ -73,7 +73,10 @@ nodes:
   identifier: urn:stackpack:portworx:shared:monitor:volume-down
   arguments:
     metric:
-      query: max by (k8s_cluster_name, volumename) (min_over_time(((max by (k8s_cluster_name, volumename) (px_volume_status{k8s_cluster_name!="", volumename!=""}) == bool 3) + (max by (k8s_cluster_name, volumename) (px_volume_state{k8s_cluster_name!="", volumename!=""}) == bool 6) > bool 0)[5m:1m]))
+      # "+" alone would inner-join px_volume_status and px_volume_state, so a volume reporting only
+      # one of the two metrics would drop out of the result. The "or" fallbacks keep that volume's
+      # single metric instead of silently losing its failure signal.
+      query: max by (k8s_cluster_name, volumename) (min_over_time(clamp_max(((max by (k8s_cluster_name, volumename) (px_volume_status{k8s_cluster_name!="", volumename!=""}) == bool 3) + (max by (k8s_cluster_name, volumename) (px_volume_state{k8s_cluster_name!="", volumename!=""}) == bool 6)) or (max by (k8s_cluster_name, volumename) (px_volume_status{k8s_cluster_name!="", volumename!=""}) == bool 3) or (max by (k8s_cluster_name, volumename) (px_volume_state{k8s_cluster_name!="", volumename!=""}) == bool 6), 1)[5m:1m]))
       unit: short
       aliasTemplate: Down or error (1 = yes)
     comparator: GT
