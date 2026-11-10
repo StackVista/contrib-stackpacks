@@ -1,1 +1,4 @@
 .idea
+*.sts
+stackpacks/*/target/
+docker/rootfs/
