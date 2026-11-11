@@ -1,0 +1,5 @@
+### Volume filesystem has fixable errors
+Portworx's filesystem check found errors that are safe to fix (filesystem health 2).
+
+#### Fix
+Stop the workload that uses the volume, then run `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume check start --mode fix_safe <volume>`. Check progress with `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl volume check status <volume>`.

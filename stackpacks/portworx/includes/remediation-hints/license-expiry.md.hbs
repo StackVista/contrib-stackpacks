@@ -1,0 +1,5 @@
+### License expires soon
+The Portworx license expires in less than **{{ threshold }}** days. After it expires, Portworx can't create or attach new volumes.
+
+#### Fix
+Renew or activate the license: `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl license activate <activation-id>`, or update the license server settings. Check with `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl license list`.

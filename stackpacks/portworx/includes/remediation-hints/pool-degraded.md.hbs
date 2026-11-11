@@ -1,0 +1,9 @@
+### Storage pool degraded
+A storage pool on this node is degraded (status 5). It still serves I/O, but with reduced redundancy or performance.
+
+#### Check first
+1. [Node metrics](/#/components/{{ componentUrnForUrl }}/metrics) → **Portworx** tab → **Health**, and **Disk latency** under **Performance**.
+2. `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service pool show` and `kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service drive show` on the node, and `dmesg` for disk errors.
+
+#### Fix
+Replace the failing drive (`kubectl -n <portworx-namespace> exec <px-cluster-pod> -c portworx -- /opt/pwx/bin/pxctl service drive replace`) and let the pool recover.

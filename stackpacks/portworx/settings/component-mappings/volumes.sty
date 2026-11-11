@@ -1,0 +1,50 @@
+# Component mapping: Portworx volume metrics -> portworx volume, merged into the Kubernetes persistent volume.
+# Portworx has no custom resource per volume. px_volume_replication_status drives it: it is the only volume metric reported for every volume, attached or not.
+# Ranked below the Kubernetes persistent volume so the merged component keeps its type.
+nodes:
+  - _type: "OtelComponentMapping"
+    name: "Portworx volume"
+    description: "Marks the Kubernetes persistent volumes that Portworx provides"
+    identifier: "urn:stackpack:portworx:otel-component-mapping:volume"
+    input:
+      signal:
+        - "METRICS"
+      resource:
+        condition: "'k8s.cluster.name' in resource.attributes"
+        scope:
+          metric:
+            condition: "metric.name == 'px_volume_replication_status'"
+            datapoint:
+              action: "'CREATE'"
+              condition: >-
+                'volumename' in datapoint.attributes &&
+                'cluster' in datapoint.attributes &&
+                datapoint.attributes['volumename'] != ''
+    vars:
+      - name: "clusterName"
+        value: "resource.attributes['k8s.cluster.name']"
+      - name: "name"
+        value: "datapoint.attributes['volumename']"
+    output:
+      identifier: "'urn:portworx:/' + vars.clusterName + ':volume/' + vars.name"
+      name: "vars.name"
+      typeName: "'portworx volume'"
+      required:
+        additionalIdentifiers:
+          - "'urn:kubernetes:/' + vars.clusterName + ':persistent-volume/' + vars.name"
+        tags:
+          - source: "'portworx'"
+            target: "stackpack"
+          - source: "vars.clusterName"
+            target: "cluster-name"
+          - source: "datapoint.attributes['cluster']"
+            target: "portworx.cluster"
+      optional:
+        tags:
+          - source: "datapoint.attributes['volumeid']"
+            target: "portworx.volume-id"
+          - source: "datapoint.attributes['repl']"
+            target: "portworx.replicas"
+    expireAfter: 900000
+    rank:
+      specificity: 10
