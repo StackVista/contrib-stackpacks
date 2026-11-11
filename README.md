@@ -60,18 +60,16 @@ package:
 
 ```sh
 sts stackpack upload --file ./my-integration-0.0.1.sts
-sts stackpack list-parameters --name my-integration
 sts stackpack install --name my-integration
 ```
 
-Upload makes the version available; installation creates an instance. Supply the
-parameters described in the StackPack's README when installing. Pull-request
+Upload makes the version available; installation creates an instance. Pull-request
 artifacts use snapshot versions; published main images use the declared version.
 
 ## Contribute
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md). Every StackPack needs a named maintainer
-and instructions for prerequisites, installation, required parameters and removal.
+and instructions for prerequisites, installation, configuration and removal.
 
 The [Create a StackPack agent skill](.agents/skills/create-stackpack/SKILL.md)
 helps create integrations with the StackPack documentation and CLI. Codex,
